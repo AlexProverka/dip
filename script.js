@@ -1118,7 +1118,7 @@ function renderMessages() {
             container.innerHTML = `
                 <div class="welcome-message">
                     <div class="welcome-icon">🎓</div>
-                    <h3>Добро пожаловать в ГЭУ Диалог AI</h3>
+                    <h3>Добро пожаловать в ГЭУ Диалог</h3>
                     <p>Задайте вопрос или отправьте код абитуриента, чтобы проверить позиции в конкурсных списках</p>
                 </div>
             `;

@@ -51,7 +51,7 @@ const server = http.createServer(async (req, res) => {
         if (requestUrl.pathname === "/api/health") {
             sendJson(res, 200, {
                 ok: true,
-                app: "ГЭУ Диалог AI",
+                app: "ГЭУ Диалог",
                 port: PORT,
                 time: new Date().toISOString()
             });
@@ -449,7 +449,7 @@ async function handleAdmissionListProxy(requestUrl, res) {
             signal: AbortSignal.timeout(ADMISSION_FETCH_TIMEOUT_MS),
             headers: {
                 "Accept": "text/html,application/xhtml+xml",
-                "User-Agent": "GEU-Dialog-AI/1.0"
+                "User-Agent": "GEU-Dialog/1.0"
             }
         });
     } catch (error) {
@@ -543,7 +543,7 @@ function getLocalNetworkUrls() {
 
 // ========== ЗАПУСК СЕРВЕРА ==========
 server.listen(PORT, HOST, () => {
-    console.log(`ГЭУ Диалог AI запущен: http://localhost:${PORT}`);
+    console.log(`ГЭУ Диалог запущен: http://localhost:${PORT}`);
 
     const networkUrls = getLocalNetworkUrls();
     if (networkUrls.length > 0) {
