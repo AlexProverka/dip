@@ -1,5 +1,5 @@
 {
-  "name": "geu-dialog-ai",
+  "name": "geu-dialog",
   "version": "1.0.0",
   "private": true,
   "description": "Прототип чат-бота приемной комиссии ГЭУ с парсером конкурсных списков.",

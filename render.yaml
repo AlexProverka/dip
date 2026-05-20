@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: geu-dialog-ai
+    name: geu-dialog
     env: node
     plan: free
     buildCommand: ""

@@ -27,7 +27,7 @@
 
 ## Render
 
-1. Создай репозиторий на GitHub, например `geu-dialog-ai`.
+1. Создай репозиторий на GitHub, например `geu-dialog`.
 2. Загрузи туда файлы проекта.
 3. Открой Render.
 4. Нажми `New` -> `Web Service`.
@@ -44,7 +44,7 @@ Health Check Path: /api/health
 Render выдаст постоянную ссылку вида:
 
 ```text
-https://geu-dialog-ai.onrender.com
+https://geu-dialog.onrender.com
 ```
 
 Через эту ссылку приложение будет открываться с другого Wi-Fi и другого компьютера, даже если твой компьютер выключен.
