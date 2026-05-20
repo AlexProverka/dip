@@ -24,7 +24,7 @@ const STORAGE_KEYS = {
 
 const API_PROXY_URL = "http://localhost:3000/api/admission-list";
 const LOCAL_SERVER_ORIGIN = "http://localhost:3000";
-const ADMISSION_REQUEST_TIMEOUT_MS = 15 * 1000;
+const ADMISSION_REQUEST_TIMEOUT_MS = 35 * 1000;
 const APPLICANT_CODE_PATTERN = /(?:код(?:\s+абитуриента)?\s*[:№#-]?\s*)?(\d{4,})/i;
 
 // ========== НАСТРОЙКИ КОНКУРСНЫХ СПИСКОВ ==========

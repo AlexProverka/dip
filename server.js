@@ -30,7 +30,7 @@ const MIME_TYPES = {
 };
 
 const ADMISSION_CACHE_TTL = 5 * 60 * 1000;
-const ADMISSION_FETCH_TIMEOUT_MS = 12 * 1000;
+const ADMISSION_FETCH_TIMEOUT_MS = 30 * 1000;
 const admissionListCache = new Map();
 
 // ========== ОСНОВНОЙ HTTP-СЕРВЕР ==========
