@@ -1,0 +1,13 @@
+{
+  "name": "geu-dialog-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Прототип чат-бота приемной комиссии ГЭУ с парсером конкурсных списков.",
+  "scripts": {
+    "start": "node --no-warnings server.js",
+    "dev": "node --no-warnings server.js"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}

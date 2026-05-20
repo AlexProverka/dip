@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <!-- ========== НАСТРОЙКИ СТРАНИЦЫ ========== -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>СПбГЭУ Диалог | AI Ассистент</title>
+    <link rel="icon" href="spbgeu-icon.png" type="image/png">
+
+    <!-- Подключение CSS-стилей интерфейса -->
+    <link rel="stylesheet" href="style.css?v=20260515-2">
+</head>
+<body>
+
+<!-- ========== ОСНОВНОЙ КОНТЕЙНЕР ПРИЛОЖЕНИЯ ========== -->
+<div class="app">
+
+    <!-- ========== БОКОВАЯ ПАНЕЛЬ ========== -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <!-- Логотип и название ассистента -->
+            <div class="logo-area">
+                <div class="geu-emblem">
+                    <img class="geu-emblem-img" src="spbgeu-icon.png" alt="СПбГЭУ">
+                </div>
+                <div>
+                    <div class="logo-text">СПбГЭУ <span>AI</span></div>
+                    <div class="sub">Приемная комиссия · Диалог</div>
+                </div>
+            </div>
+
+            <!-- Кнопка создания нового диалога -->
+            <button class="new-chat-btn" id="newChatBtn">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-right: 6px;">
+                    <path d="M8 2V14M2 8H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                Новый диалог
+            </button>
+
+            <!-- Переключение режима работы чат-бота -->
+            <div class="mode-switch" id="modeSwitch">
+                <button class="mode-btn active" data-mode="applicant">Абитуриент</button>
+                <button class="mode-btn" data-mode="staff">Сотрудник</button>
+            </div>
+
+            <!-- Кнопка журнала проверок сотрудника -->
+            <button class="reviews-btn" id="reviewsToggle">
+                Журнал проверок
+                <span id="reviewCounter">0</span>
+            </button>
+        </div>
+
+        <!-- Заголовок блока истории диалогов -->
+        <div class="chats-header">
+            <span>История диалогов</span>
+        </div>
+
+        <!-- Список диалогов заполняется через script.js -->
+        <div class="chats-list" id="chatsList"></div>
+
+        <!-- Статус работы ассистента -->
+            <div class="footer">
+                <div class="status-indicator" id="statusIndicator">
+                    <span class="status-dot"></span>
+                <span>База данных подключается</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== ОСНОВНАЯ ОБЛАСТЬ ЧАТА ========== -->
+    <div class="main">
+
+        <!-- Верхняя панель активного диалога -->
+        <div class="chat-header">
+            <div>
+                <span id="activeChatTitle">Новый диалог</span>
+                <span class="badge">СПбГЭУ</span>
+                <span class="mode-badge" id="currentModeBadge">Режим абитуриента</span>
+            </div>
+            <div class="chat-actions">
+                <button class="icon-btn" id="clearChatBtn" title="Очистить диалог">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M3 6H21M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6" stroke="currentColor"/>
+                        <path d="M10 11V17M14 11V17" stroke="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Контейнер сообщений чата -->
+        <div class="messages-container" id="messagesContainer">
+            <div class="welcome-message">
+                <div class="welcome-icon">🎓</div>
+                <h3>Добро пожаловать в ГЭУ Диалог AI</h3>
+                <p>Задайте вопрос или отправьте код абитуриента, чтобы проверить позиции в конкурсных списках</p>
+            </div>
+        </div>
+
+        <!-- Поле ввода сообщения пользователя -->
+        <div class="input-area">
+            <div class="input-wrapper">
+                <input type="text" id="messageInput" placeholder="Напишите вопрос или код абитуриента...">
+                <button id="sendBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+            <div class="input-hint">Например: «проверь код 123456» · Enter для отправки</div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ========== ЖУРНАЛ ПРОВЕРОК СОТРУДНИКА ========== -->
+<div class="review-drawer" id="reviewDrawer" hidden>
+    <div class="review-drawer-header">
+        <div>
+            <h3>Журнал проверок</h3>
+            <p>Здесь сохраняются оценки, исправления и вывод агента анализа ошибок.</p>
+        </div>
+        <button class="drawer-close" id="reviewDrawerClose" title="Закрыть">×</button>
+    </div>
+    <div class="review-filters" id="reviewFilters">
+        <button class="review-filter active" data-review-filter="all">Все</button>
+        <button class="review-filter" data-review-filter="incorrect">Неправильные</button>
+        <button class="review-filter" data-review-filter="correct">Правильные</button>
+    </div>
+    <div class="review-list" id="reviewList"></div>
+</div>
+
+<!-- Подключение JavaScript-логики чата -->
+<script src="script.js?v=20260515-3"></script>
+</body>
+</html>

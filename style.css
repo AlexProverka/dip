@@ -1,0 +1,803 @@
+/* ========== БАЗОВЫЕ НАСТРОЙКИ СТРАНИЦЫ ========== */
+:root {
+    --geu-turquoise: #00a6b4;
+    --geu-turquoise-dark: #007d8a;
+    --geu-lime: #b7d719;
+    --geu-lime-soft: #eef8b8;
+    --geu-purple: #6f2da8;
+    --geu-purple-dark: #4b1d73;
+    --geu-ink: #18333f;
+    --geu-muted: #63717a;
+    --geu-line: #dbe8ec;
+    --geu-surface: #f6fbfc;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Century Gothic', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #edf7f8;
+    height: 100vh;
+    overflow: hidden;
+    color: var(--geu-ink);
+}
+
+/* ========== ОСНОВНОЙ МАКЕТ ========== */
+.app {
+    display: flex;
+    height: 100vh;
+    min-width: 0;
+    overflow: hidden;
+    border-top: 5px solid var(--geu-turquoise);
+}
+
+/* ========== БОКОВАЯ ПАНЕЛЬ ========== */
+.sidebar {
+    width: 320px;
+    min-width: 320px;
+    flex: 0 0 320px;
+    background: linear-gradient(180deg, #ffffff 0%, #f5fbfc 100%);
+    border-right: 1px solid var(--geu-line);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--geu-line);
+    background: white;
+}
+
+/* Логотип и подпись университета */
+.logo-area {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.geu-emblem {
+    background: white;
+    width: 58px;
+    height: 58px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 22px rgba(0,166,180,0.2);
+    border: 1px solid #d7f2f4;
+    overflow: hidden;
+}
+
+.geu-emblem-img {
+    width: 52px;
+    height: 52px;
+    display: block;
+    object-fit: contain;
+}
+
+.logo-text {
+    font-weight: 800;
+    font-size: 18px;
+}
+
+.logo-text span {
+    color: var(--geu-purple);
+}
+
+.sub {
+    font-size: 11px;
+    color: var(--geu-muted);
+    margin-top: 2px;
+}
+
+/* Кнопка нового диалога */
+.new-chat-btn {
+    margin-top: 16px;
+    width: 100%;
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, var(--geu-turquoise), var(--geu-purple));
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.new-chat-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,166,180,0.28);
+}
+
+/* Переключатель режима абитуриента и сотрудника */
+.mode-switch {
+    margin-top: 14px;
+    padding: 4px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    background: #edf8fa;
+    border: 1px solid var(--geu-line);
+    border-radius: 12px;
+}
+
+.mode-btn {
+    border: none;
+    border-radius: 9px;
+    padding: 8px 6px;
+    background: transparent;
+    color: var(--geu-muted);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.mode-btn.active {
+    background: var(--geu-purple);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(111,45,168,0.22);
+}
+
+/* Кнопка открытия журнала проверок */
+.reviews-btn {
+    margin-top: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #dbeea0;
+    border-radius: 10px;
+    background: var(--geu-lime-soft);
+    color: #445006;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+}
+
+.reviews-btn span {
+    min-width: 24px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: var(--geu-purple);
+    color: #fff;
+    font-size: 11px;
+}
+
+/* Заголовок истории диалогов */
+.chats-header {
+    padding: 12px 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--geu-muted);
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--geu-line);
+}
+
+/* ========== СПИСОК ДИАЛОГОВ ========== */
+.chats-list {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+/* Отдельный элемент истории диалогов */
+.chat-item {
+    background: white;
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.chat-item:hover {
+    background: #edf8fa;
+    border-color: #bfe8ed;
+}
+
+.chat-item.active {
+    background: linear-gradient(135deg, rgba(0,166,180,0.10), rgba(183,215,25,0.16));
+    border-left: 3px solid var(--geu-lime);
+    border-color: var(--geu-turquoise);
+}
+
+.chat-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-preview {
+    font-size: 12px;
+    color: var(--geu-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-date {
+    font-size: 10px;
+    color: #8aa2a8;
+}
+
+/* Кнопка удаления диалога */
+.delete-chat {
+    opacity: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #8aa2a8;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.chat-item:hover .delete-chat {
+    opacity: 1;
+}
+
+.delete-chat:hover {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+/* ========== НИЖНИЙ СТАТУС В БОКОВОЙ ПАНЕЛИ ========== */
+.footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--geu-line);
+    background: white;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--geu-muted);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--geu-lime);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-dot.error {
+    background: #ef4444;
+}
+
+/* Анимация зеленой точки статуса */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ========== ОСНОВНАЯ ОБЛАСТЬ ЧАТА ========== */
+.main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--geu-surface);
+}
+
+/* ========== ВЕРХНЯЯ ПАНЕЛЬ ДИАЛОГА ========== */
+.chat-header {
+    padding: 20px 30px;
+    border-bottom: 1px solid var(--geu-line);
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+}
+
+.chat-header > div:first-child {
+    font-weight: 700;
+    font-size: 18px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Значок типа ассистента */
+.badge {
+    margin-left: 12px;
+    background: linear-gradient(135deg, rgba(0,166,180,0.12), rgba(183,215,25,0.22));
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--geu-turquoise-dark);
+}
+
+/* Текущий режим работы */
+.mode-badge {
+    margin-left: 8px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: #f0e8f8;
+    color: var(--geu-purple);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Кнопка очистки текущего диалога */
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    color: var(--geu-muted);
+    transition: all 0.2s;
+}
+
+.icon-btn:hover {
+    background: #edf8fa;
+    color: #ef4444;
+}
+
+/* ========== СООБЩЕНИЯ ЧАТА ========== */
+.messages-container {
+    flex: 1;
+    padding: 20px 30px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Приветственный блок в пустом диалоге */
+.welcome-message {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--geu-muted);
+}
+
+.welcome-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.welcome-message h3 {
+    color: var(--geu-ink);
+    margin-bottom: 8px;
+}
+
+/* Общая обертка сообщения */
+.message {
+    max-width: 75%;
+    min-width: 0;
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Анимация появления сообщения */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Расположение сообщений пользователя и ассистента */
+.user-message {
+    margin-left: auto;
+}
+
+.bot-message {
+    margin-right: auto;
+}
+
+/* Текстовый блок сообщения */
+.message-bubble {
+    padding: 12px 18px;
+    border-radius: 20px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    max-width: 100%;
+}
+
+/* Сообщение пользователя */
+.user-message .message-bubble {
+    background: linear-gradient(135deg, var(--geu-turquoise), var(--geu-purple));
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+/* Сообщение ассистента */
+.bot-message .message-bubble {
+    background: white;
+    border: 1px solid var(--geu-line);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    white-space: normal;
+}
+
+/* Визуальный отступ между абзацами ответа */
+.bot-message .message-bubble br + br {
+    content: "";
+    display: block;
+    margin-top: 8px;
+}
+
+/* Источник ответа и блок оценки для сотрудника */
+.message-source {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e9eef4;
+    color: var(--geu-muted);
+    font-size: 12px;
+}
+
+.feedback-panel {
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid #dbe5ef;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.feedback-title {
+    margin-bottom: 8px;
+    color: var(--geu-muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.feedback-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.feedback-btn {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 7px 10px;
+    background: #fff;
+    color: var(--geu-ink);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.feedback-btn.correct {
+    border-color: #86efac;
+    color: #166534;
+}
+
+.feedback-btn.incorrect {
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+.feedback-form {
+    margin-top: 10px;
+    display: none;
+}
+
+.feedback-form.visible {
+    display: block;
+}
+
+.feedback-form textarea {
+    width: 100%;
+    min-height: 88px;
+    resize: vertical;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.feedback-form button {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    background: var(--geu-purple);
+    color: #fff;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.feedback-saved {
+    margin-top: 8px;
+    color: #166534;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* Вывод агента, который ищет причину неправильного ответа */
+.analysis-box {
+    margin-top: 8px;
+    padding: 9px 10px;
+    border: 1px solid #d8e2ee;
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--geu-muted);
+    font-size: 12px;
+}
+
+.analysis-box b {
+    color: var(--geu-purple);
+}
+
+/* Время отправки сообщения */
+.message-time {
+    font-size: 11px;
+    color: #8aa2a8;
+    margin-top: 4px;
+    margin-left: 12px;
+}
+
+/* Индикатор печати ассистента */
+.typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 12px 18px;
+}
+
+.typing-indicator span {
+    width: 8px;
+    height: 8px;
+    background: #8aa2a8;
+    border-radius: 50%;
+    animation: typing 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+/* Анимация индикатора печати */
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.5;
+    }
+    30% {
+        transform: translateY(-10px);
+        opacity: 1;
+    }
+}
+
+/* ========== ПОЛЕ ВВОДА СООБЩЕНИЯ ========== */
+.input-area {
+    padding: 20px 30px 30px;
+    background: white;
+    border-top: 1px solid var(--geu-line);
+    min-width: 0;
+}
+
+/* Обертка поля ввода и кнопки отправки */
+.input-wrapper {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Поле ввода текста */
+.input-wrapper input {
+    flex: 1;
+    padding: 14px 18px;
+    border-radius: 30px;
+    border: 1px solid var(--geu-line);
+    font-size: 14px;
+    transition: all 0.2s;
+    background: #f8fafc;
+}
+
+.input-wrapper input:focus {
+    outline: none;
+    border-color: var(--geu-lime);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(0,166,180,0.18);
+}
+
+/* Кнопка отправки сообщения */
+.input-wrapper button {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, var(--geu-turquoise), var(--geu-purple));
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.input-wrapper button:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, var(--geu-lime), var(--geu-turquoise));
+}
+
+/* Подсказка под полем ввода */
+.input-hint {
+    font-size: 11px;
+    color: #8aa2a8;
+    margin-top: 8px;
+    text-align: center;
+}
+
+/* ========== СТИЛИЗАЦИЯ ПОЛОСЫ ПРОКРУТКИ ========== */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #edf8fa;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #8aa2a8;
+}
+
+/* ========== ЖУРНАЛ ПРОВЕРОК СОТРУДНИКА ========== */
+.review-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: min(520px, 100vw);
+    height: 100vh;
+    z-index: 20;
+    background: #ffffff;
+    border-left: 1px solid #dbe4ee;
+    box-shadow: -12px 0 30px rgba(15, 23, 42, 0.16);
+    display: flex;
+    flex-direction: column;
+}
+
+.review-drawer[hidden] {
+    display: none;
+}
+
+.review-drawer-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--geu-line);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.review-drawer-header h3 {
+    margin-bottom: 4px;
+    color: var(--geu-purple);
+}
+
+.review-drawer-header p {
+    color: var(--geu-muted);
+    font-size: 13px;
+}
+
+/* Фильтр журнала по типу оценки */
+.review-filters {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--geu-line);
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.review-filter {
+    border: 1px solid #d8e2ee;
+    border-radius: 8px;
+    padding: 7px 10px;
+    background: #ffffff;
+    color: var(--geu-muted);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.review-filter.active {
+    border-color: var(--geu-purple);
+    background: var(--geu-purple);
+    color: #ffffff;
+}
+
+.drawer-close {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 8px;
+    background: #edf8fa;
+    color: var(--geu-ink);
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+}
+
+.review-list {
+    padding: 14px;
+    overflow-y: auto;
+}
+
+.review-item {
+    margin-bottom: 12px;
+    padding: 12px;
+    border: 1px solid var(--geu-line);
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.review-item.correct {
+    border-left: 4px solid #22c55e;
+}
+
+.review-item.incorrect {
+    border-left: 4px solid #ef4444;
+}
+
+.review-item strong {
+    color: var(--geu-purple);
+}
+
+.review-item p {
+    margin-top: 6px;
+    color: var(--geu-muted);
+    font-size: 13px;
+}
+
+.review-meta {
+    margin-top: 8px;
+    color: var(--geu-muted);
+    font-size: 12px;
+}
+
+.review-analysis {
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid #dbe4ee;
+}
+
+.review-analysis ul {
+    margin: 8px 0 0 18px;
+    color: var(--geu-muted);
+    font-size: 12px;
+}
+
+.empty-reviews {
+    padding: 28px 16px;
+    text-align: center;
+    color: var(--geu-muted);
+}

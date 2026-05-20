@@ -1,0 +1,14 @@
+node_modules/
+Интерфейс/node_modules/
+
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal
+
+*.log
+*.rar
+~$*
+
+.env
+.DS_Store
+Thumbs.db

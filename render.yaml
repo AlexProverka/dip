@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: geu-dialog-ai
+    env: node
+    plan: free
+    buildCommand: ""
+    startCommand: "node --no-warnings server.js"
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.14.0
