@@ -1315,7 +1315,7 @@ function updateModeUI() {
     }
 }
 
-function handleFeedbackClick(event) {
+async function handleFeedbackClick(event) {
     const feedbackButton = event.target.closest("[data-feedback]");
     const correctionButton = event.target.closest("[data-save-correction]");
 
@@ -1324,7 +1324,7 @@ function handleFeedbackClick(event) {
         const rating = feedbackButton.dataset.feedback;
 
         if (rating === "correct") {
-            saveStaffReview(messageId, "correct");
+            await saveStaffReview(messageId, "correct");
             return;
         }
 
@@ -1343,11 +1343,11 @@ function handleFeedbackClick(event) {
             return;
         }
 
-        saveStaffReview(messageId, "incorrect", correctedAnswer);
+        await saveStaffReview(messageId, "incorrect", correctedAnswer);
     }
 }
 
-function saveStaffReview(messageId, rating, correctAnswer = "") {
+async function saveStaffReview(messageId, rating, correctAnswer = "") {
     const chat = chats.find(c => c.id === activeChatId);
     if (!chat) return;
 
@@ -1357,10 +1357,16 @@ function saveStaffReview(messageId, rating, correctAnswer = "") {
     const answerMessage = chat.messages[messageIndex];
     const questionMessage = [...chat.messages.slice(0, messageIndex)].reverse().find(message => message.role === "user");
     const question = questionMessage?.content || "Вопрос не найден";
-    const correctionSource = correctAnswer ? findCorrectionSource(question, correctAnswer, answerMessage.meta || {}) : null;
-    const analysis = rating === "incorrect"
-        ? analyzeWrongAnswer({ question, answerMessage, correctAnswer, correctionSource })
-        : null;
+    let correctionSource = correctAnswer ? findCorrectionSource(question, correctAnswer, answerMessage.meta || {}) : null;
+    let analysis = null;
+
+    if (rating === "incorrect") {
+        const serverAnalysis = await requestSourceBasedErrorAnalysis(question, answerMessage, correctAnswer);
+        analysis = serverAnalysis?.analysis || analyzeWrongAnswer({ question, answerMessage, correctAnswer, correctionSource });
+        correctionSource = {
+            title: analysis?.suggestedSource || correctionSource?.title || ""
+        };
+    }
 
     const review = {
         id: generateId(),
@@ -1384,6 +1390,49 @@ function saveStaffReview(messageId, rating, correctAnswer = "") {
     renderMessages();
     renderReviewPanel();
     updateReviewCounter();
+}
+
+async function requestSourceBasedErrorAnalysis(question, answerMessage, correctAnswer) {
+    try {
+        return await apiRequest("/api/error-analysis", {
+            method: "POST",
+            body: {
+                question,
+                agentAnswer: answerMessage.content || "",
+                agentSources: collectAgentSources(answerMessage),
+                adminAnswer: correctAnswer,
+                topK: 5
+            }
+        });
+    } catch (error) {
+        console.warn("Не удалось выполнить серверный анализ ошибки по combined_data:", error);
+        return null;
+    }
+}
+
+function collectAgentSources(answerMessage) {
+    const meta = answerMessage.meta || {};
+    const sources = [];
+
+    if (meta.source) {
+        sources.push({
+            title: meta.source,
+            text: meta.source
+        });
+    }
+
+    (meta.sourceDetails || []).forEach(detail => {
+        if (typeof detail === "string") {
+            sources.push({ title: detail, text: detail });
+            return;
+        }
+
+        if (detail && typeof detail === "object") {
+            sources.push(detail);
+        }
+    });
+
+    return sources;
 }
 
 function renderReviewPanel() {
@@ -1425,12 +1474,17 @@ function renderReviewAnalysis(review) {
         const evidence = (review.analysis.evidence || [])
             .map(item => `<li>${escapeHtmlInline(item)}</li>`)
             .join("");
+        const topSources = (review.analysis.topSources || [])
+            .slice(0, 3)
+            .map(source => `<li>${escapeHtmlInline(`${source.fileName || "источник"}${source.pageNumber ? `, стр. ${source.pageNumber}` : ""} — ${source.score}`)}</li>`)
+            .join("");
 
         return `
             <div class="review-analysis">
                 <p><b>Причина:</b> ${escapeHtmlInline(review.analysis.reasonTitle)}</p>
                 <p>${escapeHtmlInline(review.analysis.reasonText)}</p>
                 <p><b>Рекомендация:</b> ${escapeHtmlInline(review.analysis.recommendation)}</p>
+                ${topSources ? `<p><b>Top-k источники по правильному ответу:</b></p><ul>${topSources}</ul>` : ""}
                 ${evidence ? `<ul>${evidence}</ul>` : ""}
             </div>
         `;

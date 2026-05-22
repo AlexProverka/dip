@@ -3,6 +3,12 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { DatabaseSync } = require("node:sqlite");
+const {
+    analyzeErrorCase,
+    analyzeErrorCaseWithLlm,
+    getSourceStats,
+    searchSources
+} = require("./error_analysis_agent");
 
 // ========== НАСТРОЙКИ СЕРВЕРА ==========
 const PORT = Number(process.env.PORT || 3000);
@@ -184,6 +190,31 @@ async function handleAppApi(req, requestUrl, res) {
         const review = await readRequestJson(req);
         upsertReview(review);
         sendJson(res, 200, { ok: true });
+        return true;
+    }
+
+    if (pathname === "/api/source-search" && req.method === "POST") {
+        const payload = await readRequestJson(req);
+        sendJson(res, 200, {
+            query: payload.query || "",
+            topK: Number(payload.topK || 5),
+            sources: searchSources(payload.query || "", payload.topK || 5),
+            stats: getSourceStats()
+        });
+        return true;
+    }
+
+    if (pathname === "/api/error-analysis" && req.method === "POST") {
+        const payload = await readRequestJson(req);
+        const analysis = await analyzeErrorCaseWithLlm({
+            question: payload.question || "",
+            agentAnswer: payload.agentAnswer || "",
+            agentSources: payload.agentSources || [],
+            adminAnswer: payload.adminAnswer || payload.correctAnswer || "",
+            topK: payload.topK || 5
+        });
+
+        sendJson(res, 200, { analysis, stats: getSourceStats() });
         return true;
     }
 
