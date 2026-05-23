@@ -57,9 +57,12 @@ async function main() {
     console.log(`Режим: ${USE_LLM ? "LLM" : "локальный"}`);
     if (USE_LLM) {
         const llmUsed = results.filter(item => item.llm?.used).length;
+        const llmErrors = results.filter(item => item.llm?.error).length;
         console.log(`LLM вызвана: ${llmUsed}/${results.length}`);
-        if (llmUsed === 0) {
+        if (llmUsed === 0 && llmErrors === 0) {
             console.log("LLM-ключ не задан, все кейсы обработаны локальным fallback.");
+        } else if (llmErrors > 0) {
+            console.log(`LLM не дала успешный ответ для ${llmErrors} кейсов, использован локальный fallback. Детали есть в отчете.`);
         }
     }
     console.log(`Тестов: ${report.total}`);

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-22T23:51:42.650Z",
+  "generatedAt": "2026-05-23T00:07:49.701Z",
   "mode": "llm",
   "sourceStats": {
     "sourcePath": "C:\\Users\\Acer\\Desktop\\Диплом\\data\\combined_data.json",
@@ -65,7 +65,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -125,7 +126,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -185,7 +187,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -244,7 +247,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -304,7 +308,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -364,7 +369,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -423,7 +429,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -483,7 +490,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -543,7 +551,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -603,7 +612,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -663,7 +673,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -723,7 +734,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -783,7 +795,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -842,7 +855,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -901,7 +915,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -961,7 +976,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -1020,7 +1036,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     },
     {
@@ -1079,7 +1096,8 @@
       ],
       "llm": {
         "used": false,
-        "reason": "OPENAI_API_KEY или LLM_API_KEY не задан, используется локальная логика."
+        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
+        "fallback": "LLM не ответила, используется локальная логика."
       }
     }
   ]
