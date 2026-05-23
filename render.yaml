@@ -9,3 +9,11 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 24.14.0
+      - key: LLM_PROVIDER
+        value: pollinations
+      - key: LLM_MODEL
+        value: openai-fast
+      - key: LLM_TIMEOUT_MS
+        value: 120000
+      - key: LLM_MAX_TOKENS
+        value: 1000

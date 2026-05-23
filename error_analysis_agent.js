@@ -5,6 +5,9 @@ const DEFAULT_TOP_K = 5;
 const MAX_SOURCE_PREVIEW = 520;
 const DEFAULT_LLM_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 const DEFAULT_LLM_MODEL = "gpt-4o-mini";
+const POLLINATIONS_PROVIDER = "pollinations";
+const POLLINATIONS_LEGACY_ENDPOINT = "https://text.pollinations.ai/openai";
+const POLLINATIONS_MODEL = "openai-fast";
 
 const SOURCE_PATHS = [
     process.env.SOURCE_DATA_PATH,
@@ -447,25 +450,33 @@ function buildAnalysis({ reasonType, reasonTitle, reasonText, recommendation, ev
 }
 
 function isLlmConfigured() {
-    return Boolean(process.env.OPENAI_API_KEY || process.env.LLM_API_KEY);
+    const config = getLlmConfig();
+    return config.provider === POLLINATIONS_PROVIDER || Boolean(config.apiKey);
 }
 
 function getLlmConfig() {
+    const provider = (process.env.LLM_PROVIDER || "").trim().toLowerCase();
+    const usePollinations = provider === POLLINATIONS_PROVIDER;
+
     return {
-        endpoint: process.env.LLM_ENDPOINT || process.env.OPENAI_ENDPOINT || DEFAULT_LLM_ENDPOINT,
-        apiKey: process.env.LLM_API_KEY || process.env.OPENAI_API_KEY,
-        model: process.env.LLM_MODEL || process.env.OPENAI_MODEL || DEFAULT_LLM_MODEL,
-        timeoutMs: Number(process.env.LLM_TIMEOUT_MS || 20000)
+        provider: usePollinations ? POLLINATIONS_PROVIDER : "openai-compatible",
+        endpoint: process.env.LLM_ENDPOINT || process.env.OPENAI_ENDPOINT || (usePollinations ? POLLINATIONS_LEGACY_ENDPOINT : DEFAULT_LLM_ENDPOINT),
+        apiKey: process.env.LLM_API_KEY || process.env.OPENAI_API_KEY || "",
+        model: process.env.LLM_MODEL || process.env.OPENAI_MODEL || (usePollinations ? POLLINATIONS_MODEL : DEFAULT_LLM_MODEL),
+        timeoutMs: Number(process.env.LLM_TIMEOUT_MS || (usePollinations ? 120000 : 20000)),
+        maxTokens: Number(process.env.LLM_MAX_TOKENS || 1000),
+        retryCount: Number(process.env.LLM_RETRY_COUNT || (usePollinations ? 2 : 0)),
+        retryDelayMs: Number(process.env.LLM_RETRY_DELAY_MS || (usePollinations ? 15000 : 1500))
     };
 }
 
 async function requestLlmAnalysis(input, baseAnalysis) {
     const config = getLlmConfig();
-    const payload = buildLlmPayload(config.model, input, baseAnalysis, true);
+    const payload = buildLlmPayload(config, input, baseAnalysis, true);
     let response = await callLlmEndpoint(config, payload);
 
     if (!response.ok && response.status === 400) {
-        response = await callLlmEndpoint(config, buildLlmPayload(config.model, input, baseAnalysis, false));
+        response = await callLlmEndpoint(config, buildLlmPayload(config, input, baseAnalysis, false));
     }
 
     if (!response.ok) {
@@ -480,7 +491,7 @@ async function requestLlmAnalysis(input, baseAnalysis) {
     return parseLlmJson(content);
 }
 
-function buildLlmPayload(model, input, baseAnalysis, useResponseFormat) {
+function buildLlmPayload(config, input, baseAnalysis, useResponseFormat) {
     const context = {
         task: "Проанализируй ошибку ответа агента приемной комиссии.",
         allowedReasonTypes: {
@@ -506,11 +517,13 @@ function buildLlmPayload(model, input, baseAnalysis, useResponseFormat) {
     };
 
     const payload = {
-        model,
+        model: config.model,
         messages: [
             {
                 role: "system",
                 content: [
+                    "Keep reasonType exactly equal to localAnalysis.reasonType; improve only explanation, recommendation, evidence, suggestedSource, and description.",
+                    "Write all user-facing fields in Russian. Keep the JSON compact and valid.",
                     "Ты LLM-агент анализа ошибок для приемной комиссии.",
                     "Используй только переданные вопрос, ответ агента, источник агента, правильный ответ сотрудника и top-k источники.",
                     "Не придумывай факты и не добавляй источники извне.",
@@ -522,7 +535,8 @@ function buildLlmPayload(model, input, baseAnalysis, useResponseFormat) {
                 content: JSON.stringify(context, null, 2)
             }
         ],
-        temperature: 0.1
+        temperature: 0.1,
+        max_tokens: config.maxTokens
     };
 
     if (useResponseFormat) {
@@ -533,22 +547,51 @@ function buildLlmPayload(model, input, baseAnalysis, useResponseFormat) {
 }
 
 async function callLlmEndpoint(config, payload) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
+    const headers = {
+        "Content-Type": "application/json"
+    };
 
-    try {
-        return await fetch(config.endpoint, {
-            method: "POST",
-            signal: controller.signal,
-            headers: {
-                "Authorization": `Bearer ${config.apiKey}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        });
-    } finally {
-        clearTimeout(timeout);
+    if (config.apiKey) {
+        headers.Authorization = `Bearer ${config.apiKey}`;
     }
+
+    for (let attempt = 0; attempt <= config.retryCount; attempt += 1) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
+
+        try {
+            const response = await fetch(config.endpoint, {
+                method: "POST",
+                signal: controller.signal,
+                headers,
+                body: JSON.stringify(payload)
+            });
+
+            if (!shouldRetryLlmResponse(config, response) || attempt === config.retryCount) {
+                return response;
+            }
+
+            await response.text().catch(() => "");
+        } catch (error) {
+            if (attempt === config.retryCount) throw error;
+        } finally {
+            clearTimeout(timeout);
+        }
+
+        await sleep(config.retryDelayMs * (attempt + 1));
+    }
+}
+
+function shouldRetryLlmResponse(config, response) {
+    if (config.provider === POLLINATIONS_PROVIDER && [429, 503, 504].includes(response.status)) {
+        return true;
+    }
+
+    return [503, 504].includes(response.status);
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function parseLlmJson(content) {
@@ -565,18 +608,49 @@ function parseLlmJson(content) {
         reasonText: parsed.reasonText || parsed.reason_text,
         recommendation: parsed.recommendation,
         evidence: Array.isArray(parsed.evidence) ? parsed.evidence : [],
-        suggestedSource: parsed.suggestedSource || parsed.suggested_source,
+        suggestedSource: normalizeLlmSuggestedSource(parsed.suggestedSource || parsed.suggested_source),
         description: parsed.description || parsed.summary
     };
 }
 
+function normalizeLlmSuggestedSource(value) {
+    if (!value) return "";
+    if (typeof value === "string") return value;
+    if (Array.isArray(value)) {
+        return value
+            .map(normalizeLlmSuggestedSource)
+            .filter(Boolean)
+            .join("; ");
+    }
+
+    if (typeof value === "object") {
+        return formatSourceTitle({
+            id: value.id,
+            fileName: value.fileName || value.file_name || value.source || value.title || "",
+            pageNumber: value.pageNumber || value.page_number || value.page || ""
+        }) || value.id || "";
+    }
+
+    return String(value);
+}
+
 function mergeLlmAnalysis(baseAnalysis, llmAnalysis) {
-    const reasonType = normalizeReasonType(llmAnalysis.reasonType, baseAnalysis.reasonType);
-    const reasonTitle = llmAnalysis.reasonTitle || reasonTitleByType(reasonType) || baseAnalysis.reasonTitle;
-    const reasonText = llmAnalysis.reasonText || llmAnalysis.description || baseAnalysis.reasonText;
-    const recommendation = llmAnalysis.recommendation || baseAnalysis.recommendation;
-    const evidence = llmAnalysis.evidence?.length ? llmAnalysis.evidence : baseAnalysis.evidence;
-    const suggestedSource = llmAnalysis.suggestedSource || baseAnalysis.suggestedSource;
+    const allowReasonOverride = process.env.LLM_ALLOW_REASON_OVERRIDE === "1";
+    const llmReasonType = normalizeReasonType(llmAnalysis.reasonType, baseAnalysis.reasonType);
+    const reasonType = allowReasonOverride ? llmReasonType : baseAnalysis.reasonType;
+    const reasonTypeMatches = llmReasonType === baseAnalysis.reasonType || !llmAnalysis.reasonType;
+    const useLlmText = allowReasonOverride || reasonTypeMatches;
+    const reasonTitle = useLlmText
+        ? (llmAnalysis.reasonTitle || reasonTitleByType(reasonType) || baseAnalysis.reasonTitle)
+        : baseAnalysis.reasonTitle;
+    const reasonText = useLlmText
+        ? (llmAnalysis.reasonText || llmAnalysis.description || baseAnalysis.reasonText)
+        : baseAnalysis.reasonText;
+    const recommendation = useLlmText
+        ? (llmAnalysis.recommendation || baseAnalysis.recommendation)
+        : baseAnalysis.recommendation;
+    const evidence = useLlmText && llmAnalysis.evidence?.length ? llmAnalysis.evidence : baseAnalysis.evidence;
+    const suggestedSource = useLlmText ? (llmAnalysis.suggestedSource || baseAnalysis.suggestedSource) : baseAnalysis.suggestedSource;
     const summary = `${reasonTitle}. ${reasonText}`;
     const config = getLlmConfig();
 
@@ -589,11 +663,14 @@ function mergeLlmAnalysis(baseAnalysis, llmAnalysis) {
         evidence,
         suggestedSource,
         summary,
-        description: llmAnalysis.description || summary,
+        description: useLlmText ? (llmAnalysis.description || summary) : summary,
         llm: {
             used: true,
+            provider: config.provider,
             model: config.model,
-            endpoint: config.endpoint
+            endpoint: config.endpoint,
+            suggestedReasonType: llmAnalysis.reasonType || null,
+            reasonTypeLocked: !allowReasonOverride
         }
     };
 }

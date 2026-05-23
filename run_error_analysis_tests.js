@@ -74,7 +74,7 @@ async function main() {
         const status = item.matched_expected ? "OK" : "CHECK";
         console.log(`[${status}] ${item.id}: ${item.actual_error_type} — ${item.question}`);
         console.log(`  ${item.description}`);
-        if (item.llm?.used) console.log(`  LLM: ${item.llm.model}`);
+        if (item.llm?.used) console.log(`  LLM: ${item.llm.provider || "openai-compatible"} / ${item.llm.model}`);
         if (item.suggested_source) console.log(`  Источник: ${item.suggested_source}`);
     });
 }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-23T00:07:49.701Z",
+  "generatedAt": "2026-05-23T00:52:20.444Z",
   "mode": "llm",
   "sourceStats": {
     "sourcePath": "C:\\Users\\Acer\\Desktop\\Диплом\\data\\combined_data.json",
@@ -14,8 +14,8 @@
       "expected_error_type": "wrong-source",
       "actual_error_type": "wrong-source",
       "matched_expected": true,
-      "description": "Неправильно выбран источник. Правильный ответ указывает на другие источники, чем те, по которым был построен ответ агента.",
-      "suggested_source": "obschejitiya_faq.json, стр. 1",
+      "description": "Агент использовал неверный источник, из‑за чего ответ не содержит нужных деталей о количестве и типах общежитий.",
+      "suggested_source": "source-343; source-364; source-371",
       "top_sources": [
         {
           "id": "source-343",
@@ -59,14 +59,17 @@
         }
       ],
       "evidence": [
-        "Источник агента не совпал с top-k источниками, найденными по правильному ответу сотрудника.",
-        "Top-k по правильному ответу: obschejitiya_faq.json, стр. 1 (0.1798); general_faq.json, стр. 3 (0.1269); general_faq.json, стр. 4 (0.111).",
-        "Сохраненный источник агента: Общежития СПбГЭУ располагает общежитиями."
+        "Источник агента не совпал с top‑k источниками, найденными по правильному ответу сотрудника.",
+        "Top‑k по правильному ответу: obschejitiya_faq.json, стр. 1 (0.1798); general_faq.json, стр. 3 (0.1269); general_faq.json, стр. 4 (0.111).",
+        "Сохраненный источник агента: «Общежития СПбГЭУ располагает общежитиями»."
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "wrong-source",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -75,8 +78,8 @@
       "expected_error_type": "incomplete-answer",
       "actual_error_type": "incomplete-answer",
       "matched_expected": true,
-      "description": "Ответ неполный. Агент выбрал близкий источник, но передал только часть эталонного ответа.",
-      "suggested_source": "obschejitiya_faq.json, стр. 1",
+      "description": "Агент предоставил неполный ответ, пропустив несколько общежитий и детали их расположения.",
+      "suggested_source": "source-343",
       "top_sources": [
         {
           "id": "source-343",
@@ -120,14 +123,17 @@
         }
       ],
       "evidence": [
-        "Ответ агента короче эталонного ответа сотрудника или не содержит важные слова из него.",
-        "Пропущенные важные слова: общежитие, находится, проспект, косыгина, улица, воронежская, используется, межвузовский.",
-        "Top-k по правильному ответу: obschejitiya_faq.json, стр. 1 (0.4791); obschejitiya_physical_places.json, стр. 2 (0.128); obschejitiya_physical_places.json, стр. 1, 2 (0.1124)."
+        "Общежитие N3 проспект Косыгина, 19/2",
+        "Общежитие N4 улица Воронежская, 69",
+        "Межвузовский студенческий городок на Новоизмайловском проспекте, 16"
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "incomplete-answer",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -181,14 +187,17 @@
         }
       ],
       "evidence": [
-        "Ответ агента короче эталонного ответа сотрудника или не содержит важные слова из него.",
-        "Пропущенные важные слова: общежитие, начинается, выхода, проводится.",
-        "Top-k по правильному ответу: obschejitiya_faq.json, стр. 2 (0.3667); obschejitiya_faq.json, стр. 1 (0.2417); obschejitiya_faq.json, стр. 1 (0.228)."
+        "Агент ответил: «Заселение проходит после приказа о зачислении», тогда как эталонный ответ: «Заселение в общежитие начинается после выхода приказа о зачислении. Заселение проводится с 10:00 до 17:00».",
+        "В источнике obschejitiya_faq.json, стр. 2 (score 0.3667) содержится полная информация о дате и часах.",
+        "Отсутствие в ответе ключевых слов «начинается», «проводится», «10:00–17:00»."
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "incomplete-answer",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -197,8 +206,8 @@
       "expected_error_type": "nonexistent-direction",
       "actual_error_type": "nonexistent-direction",
       "matched_expected": true,
-      "description": "Появились лишние строки или приписки. Агент добавил сведения, которые не подтверждаются найденными по правильному ответу источниками.",
-      "suggested_source": "obschejitiya_faq.json, стр. 1",
+      "description": "Агент неверно расширил условие предоставления общежития, добавив «без исключений», что не подтверждается источниками.",
+      "suggested_source": "source-342",
       "top_sources": [
         {
           "id": "source-345",
@@ -242,13 +251,16 @@
         }
       ],
       "evidence": [
-        "В ответе агента есть лишние слова/приписки, которых нет в правильном ответе и найденных источниках: исключений.",
-        "Top-k по правильному ответу: obschejitiya_faq.json, стр. 1 (0.6541); obschejitiya_faq.json, стр. 1 (0.4692); general_faq.json, стр. 1 (0.1736)."
+        "«Как правило, все иногородние студенты очной формы обучения получают место в общежитии» – source-345",
+        "«Общежитие не предоставляется студентам, проживающим в ближайших пригородах Санкт-Петербурга» – source-342"
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "nonexistent-direction",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -257,8 +269,8 @@
       "expected_error_type": "incomplete-answer",
       "actual_error_type": "incomplete-answer",
       "matched_expected": true,
-      "description": "Ответ неполный. Агент выбрал близкий источник, но передал только часть эталонного ответа.",
-      "suggested_source": "kontakty_fakultetov_po_napravleniyam_podgotovki.json, стр. 1",
+      "description": "Ответ агента неполный: пропущены два факультета и два адреса, что приводит к недостоверной информации.",
+      "suggested_source": "source-337",
       "top_sources": [
         {
           "id": "source-337",
@@ -302,14 +314,19 @@
         }
       ],
       "evidence": [
-        "Ответ агента короче эталонного ответа сотрудника или не содержит важные слова из него.",
-        "Пропущенные важные слова: факультет, экономики, финансов, информационных, технологий, набережная, канала, управления.",
-        "Top-k по правильному ответу: kontakty_fakultetov_po_napravleniyam_podgotovki.json, стр. 1 (0.5516); kontakty_fakultetov_po_napravleniyam_podgotovki.json, стр. 2 (0.5165); kontakty_fakultetov_po_napravleniyam_podgotovki.json, стр. 1 (0.5075)."
+        "Факультет экономики, финансов и информационных технологий – набережная канала Грибоедова, 30-32",
+        "Факультет управления – улица Марата, 27",
+        "Факультет бизнеса, таможенного дела и экономической безопасности – Прилукская улица, 3",
+        "Факультет сервиса, туризма и гостеприимства и юридический факультет – 7-я Красноармейская улица, 6/8",
+        "Гуманитарный факультет – Москательный переулок, 4"
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "incomplete-answer",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -318,8 +335,8 @@
       "expected_error_type": "incomplete-answer",
       "actual_error_type": "incomplete-answer",
       "matched_expected": true,
-      "description": "Ответ неполный. Агент выбрал близкий источник, но передал только часть эталонного ответа.",
-      "suggested_source": "general_faq.json, стр. 3",
+      "description": "Агент предоставил неполный ответ, пропустив ключевые условия перехода с договорной формы на бюджетную.",
+      "suggested_source": "source-364",
       "top_sources": [
         {
           "id": "source-364",
@@ -363,14 +380,17 @@
         }
       ],
       "evidence": [
-        "Ответ агента короче эталонного ответа сотрудника или не содержит важные слова из него.",
-        "Пропущенные важные слова: переход, договорной, основы, обучения, возможен, бюджетных, отсутствии, академических.",
-        "Top-k по правильному ответу: general_faq.json, стр. 3 (0.6929); obschejitiya_faq.json, стр. 1 (0.0949); pp_spbgeu_2026_cropp.json, стр. 37 (0.077)."
+        "«Наличие свободных бюджетных мест» – упомянуто в ответе агента.",
+        "«Отсутствие академических задолженностей», «отсутствие задолженности по оплате обучения», «отсутствие дисциплинарных взысканий за два последних семестра», «промежуточная аттестация за два последних семестра» – перечислены в полном ответе сотрудника и в source-364.",
+        "В source-364 (general_faq.json, стр. 3) содержится полный список условий перехода."
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "incomplete-answer",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -379,8 +399,8 @@
       "expected_error_type": "nonexistent-direction",
       "actual_error_type": "nonexistent-direction",
       "matched_expected": true,
-      "description": "Появились лишние строки или приписки. Агент добавил сведения, которые не подтверждаются найденными по правильному ответу источниками.",
-      "suggested_source": "general_faq.json, стр. 3",
+      "description": "Неверное утверждение о наличии военной кафедры.",
+      "suggested_source": "source-367",
       "top_sources": [
         {
           "id": "source-367",
@@ -424,13 +444,16 @@
         }
       ],
       "evidence": [
-        "В ответе агента есть лишние слова/приписки, которых нет в правильном ответе и найденных источниках: .",
-        "Top-k по правильному ответу: general_faq.json, стр. 3 (0.376); pp_spbgeu_2026_cropp.json, стр. 24, 28 (0.1514); pp_spbgeu_2026_cropp.json, стр. 24, 28 (0.1514)."
+        "В СПбГЭУ реализуется программа военной подготовки.",
+        "Есть ли военная кафедра? Нет, но есть программа военной подготовки."
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "nonexistent-direction",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -439,8 +462,8 @@
       "expected_error_type": "wrong-source",
       "actual_error_type": "wrong-source",
       "matched_expected": true,
-      "description": "Неправильно выбран источник. Правильный ответ указывает на другие источники, чем те, по которым был построен ответ агента.",
-      "suggested_source": "general_faq.json, стр. 4",
+      "description": "Агент использовал неверный источник, который не содержит информации о подготовительных курсах. Правильный ответ основан на general_faq.json, где указано, что Центр довузовской подготовки осуществляет подготовку абитуриентов.",
+      "suggested_source": "source-369",
       "top_sources": [
         {
           "id": "source-369",
@@ -484,14 +507,17 @@
         }
       ],
       "evidence": [
-        "Источник агента не совпал с top-k источниками, найденными по правильному ответу сотрудника.",
-        "Top-k по правильному ответу: general_faq.json, стр. 4 (0.5279); kontakty_fakultetov_po_napravleniyam_podgotovki.json, стр. 2 (0.1002); pp_spbgeu_2026_cropp.json, стр. 37 (0.0937).",
-        "Сохраненный источник агента: Колледж бизнеса и технологий Колледж бизнеса и технологий проводит день открытых дверей."
+        "Источник агента не совпал с top‑k источниками, найденными по правильному ответу сотрудника.",
+        "Top‑k по правильному ответу: general_faq.json, стр. 4 (0.5279); kontakty_fakultetov_po_napravleniyam_podgotovki.json, стр. 2 (0.1002); pp_spbgeu_2026_cropp.json, стр. 37 (0.0937).",
+        "Сохраненный источник агента: Колледж бизнеса и технологий – «Колледж бизнеса и технологий проводит день открытых дверей»."
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "wrong-source",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -500,8 +526,8 @@
       "expected_error_type": "wrong-source",
       "actual_error_type": "wrong-source",
       "matched_expected": true,
-      "description": "Неправильно выбран источник. Правильный ответ указывает на другие источники, чем те, по которым был построен ответ агента.",
-      "suggested_source": "general_faq.json, стр. 4",
+      "description": "Агент использовал неверный источник, не содержащий информации о медосмотре, и дал обобщённый ответ, который не соответствует требованиям для разных уровней образования.",
+      "suggested_source": "general_faq.json, страница 4",
       "top_sources": [
         {
           "id": "source-373",
@@ -545,14 +571,18 @@
         }
       ],
       "evidence": [
-        "Источник агента не совпал с top-k источниками, найденными по правильному ответу сотрудника.",
-        "Top-k по правильному ответу: general_faq.json, стр. 4 (0.5664); spo_faq.json, стр. 1 (0.1957); pp_spbgeu_2026_cropp.json, стр. 24, 25, 26 (0.1842).",
-        "Сохраненный источник агента: Медицинская справка Поступающим на СПО необходимо предоставить медицинскую справку."
+        "Источник агента: «Медицинская справка» – «Поступающим на СПО необходимо предоставить медицинскую справку».",
+        "Правильные источники: general_faq.json, страница 4 – «При поступлении на программы высшего образования – не нужно, при СПО – необходимо для специальностей 19.02.10, 19.02.03, 19.02.05».",
+        "spo_faq.json, страница 1 – подтверждает отсутствие медосмотра для большинства СПО, кроме указанных специальностей.",
+        "pp_spbgeu_2026_cropp.json – содержит общую информацию о требованиях к документам, но не уточняет медосмотр."
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "wrong-source",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -561,8 +591,8 @@
       "expected_error_type": "incomplete-answer",
       "actual_error_type": "incomplete-answer",
       "matched_expected": true,
-      "description": "Ответ неполный. Агент выбрал близкий источник, но передал только часть эталонного ответа.",
-      "suggested_source": "obschejitiya_faq.json, стр. 1",
+      "description": "Агент предоставил неполный ответ, пропустив диапазон цен и зависимость от выбора общежития.",
+      "suggested_source": "source-348",
       "top_sources": [
         {
           "id": "source-348",
@@ -606,14 +636,16 @@
         }
       ],
       "evidence": [
-        "Ответ агента короче эталонного ответа сотрудника или не содержит важные слова из него.",
-        "Пропущенные важные слова: стоимость, проживания, зависит, выбранного, общежития, комфортности, комнаты, составляет.",
-        "Top-k по правильному ответу: obschejitiya_faq.json, стр. 1 (0.8726); obschejitiya_physical_places.json, стр. 1 (0.0888); obschejitiya_faq.json, стр. 1 (0.0863)."
+        "\"Стоимость проживания зависит от выбранного общежития и комфортности комнаты и составляет от 2000 до 7000 рублей в месяц.\"",
+        "\"Стоимость проживания зависит от выбранного общежития и комфортности комнаты в пределах от 2000 до 7000 руб./мес.\""
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "incomplete-answer",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -622,8 +654,8 @@
       "expected_error_type": "incomplete-answer",
       "actual_error_type": "incomplete-answer",
       "matched_expected": true,
-      "description": "Ответ неполный. Агент выбрал близкий источник, но передал только часть эталонного ответа.",
-      "suggested_source": "general_faq.json, стр. 1",
+      "description": "Ответ агента неполный: отсутствует дата начала и детали по группам заявителей.",
+      "suggested_source": "general_faq.json; pp_spbgeu_2026_cropp.json",
       "top_sources": [
         {
           "id": "source-357",
@@ -667,14 +699,16 @@
         }
       ],
       "evidence": [
-        "Ответ агента короче эталонного ответа сотрудника или не содержит важные слова из него.",
-        "Пропущенные важные слова: июня, поступающих, вступительным, испытаниям, проводимым, вузом, самостоятельно, завершается.",
-        "Top-k по правильному ответу: general_faq.json, стр. 1 (0.7756); pp_spbgeu_2026_cropp.json, стр. 39 (0.3927); pp_spbgeu_2026_cropp.json, стр. 39 (0.3927)."
+        "general_faq.json, стр. 1 – 20 июня – начало, 11 июля – завершение для ВИ, 25 июля – общий конец",
+        "pp_spbgeu_2026_cropp.json, стр. 39 – 20 июня – начало, 13 июля – завершение с ВИ, 25 июля – общий конец"
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "incomplete-answer",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -683,8 +717,8 @@
       "expected_error_type": "incomplete-answer",
       "actual_error_type": "incomplete-answer",
       "matched_expected": true,
-      "description": "Ответ неполный. Агент выбрал близкий источник, но передал только часть эталонного ответа.",
-      "suggested_source": "pp_spbgeu_2026_cropp.json, стр. 40, 39",
+      "description": "Агент не привёл все даты издания приказов о зачислении, что делает ответ неполным.",
+      "suggested_source": "source-140",
       "top_sources": [
         {
           "id": "source-140",
@@ -728,14 +762,16 @@
         }
       ],
       "evidence": [
-        "Ответ агента короче эталонного ответа сотрудника или не содержит важные слова из него.",
-        "Пропущенные важные слова: приоритетном, бюджетные, места, издаются, основном, августа, платные.",
-        "Top-k по правильному ответу: pp_spbgeu_2026_cropp.json, стр. 40, 39 (0.3499); pp_spbgeu_2026_cropp.json, стр. 40, 39 (0.3499); pp_spbgeu_2026_cropp.json, стр. 40, 39 (0.3499)."
+        "agentSources: \"30 июля - издание приказов о зачислении.\"",
+        "topSources preview: \"издание приказов о зачислении - 7 августа года приема; … издание приказов о зачислении - 11 августа года приема.\""
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "incomplete-answer",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -744,8 +780,8 @@
       "expected_error_type": "wrong-source",
       "actual_error_type": "wrong-source",
       "matched_expected": true,
-      "description": "Неправильно выбран источник. Правильный ответ указывает на другие источники, чем те, по которым был построен ответ агента.",
-      "suggested_source": "spo_faq.json, стр. 1",
+      "description": "Агент использовал неверный источник, поэтому ответ о необходимости экзаменов оказался некорректным.",
+      "suggested_source": "source-718; source-719; source-721",
       "top_sources": [
         {
           "id": "source-718",
@@ -789,14 +825,17 @@
         }
       ],
       "evidence": [
-        "Источник агента не совпал с top-k источниками, найденными по правильному ответу сотрудника.",
-        "Top-k по правильному ответу: spo_faq.json, стр. 1 (0.9118); spo_faq.json, стр. 1 (0.1354); spo_faq.json, стр. 1 (0.1223).",
+        "Источник агента не совпал с top‑k источниками, найденными по правильному ответу сотрудника.",
+        "Top‑k по правильному ответу: spo_faq.json, стр. 1 (0.9118); spo_faq.json, стр. 1 (0.1354); spo_faq.json, стр. 1 (0.1223).",
         "Сохраненный источник агента: Бакалавриат и специалитет Вступительные испытания для бакалавриата проводятся по расписанию."
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "wrong-source",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -805,8 +844,8 @@
       "expected_error_type": "wrong-source",
       "actual_error_type": "wrong-source",
       "matched_expected": true,
-      "description": "Неправильно выбран источник. В ответе агента есть конкретная дата или адрес, который противоречит правильному ответу сотрудника.",
-      "suggested_source": "spo_faq.json, стр. 1",
+      "description": "Ошибка в выборе источника привела к неверному адресу колледжа.",
+      "suggested_source": "source-721; source-341",
       "top_sources": [
         {
           "id": "source-721",
@@ -850,13 +889,16 @@
         }
       ],
       "evidence": [
-        "В ответе агента указаны адресные маркеры Грибоедова, а в правильном ответе - Помяловского.",
-        "Top-k по правильному ответу: spo_faq.json, стр. 1 (0.8068); kontakty_fakultetov_po_napravleniyam_podgotovki.json, стр. 2 (0.2537); pp_spbgeu_2026_cropp.json, стр. 24, 25 (0.128)."
+        "В агентском ответе указан адрес \"набережная канала Грибоедова, 30-32\", который встречается в источнике \"Контакты приемной комиссии\".",
+        "Правильный адрес указан в источнике \"spo_faq.json\" (стр. 1) как \"ул. Помяловского, д. 2\" и подтверждается источником \"kontakty_fakultetov_po_napravleniyam_podgotovki.json\" (стр. 2)."
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "wrong-source",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -865,8 +907,8 @@
       "expected_error_type": "nonexistent-direction",
       "actual_error_type": "nonexistent-direction",
       "matched_expected": true,
-      "description": "Появились лишние строки или приписки. Агент добавил сведения, которые не подтверждаются найденными по правильному ответу источниками.",
-      "suggested_source": "spo_faq.json, стр. 1",
+      "description": "Агент ошибочно добавил информацию о старшем курсе, которой нет в источнике. Нужно использовать только подтверждённые данные.",
+      "suggested_source": "source-722",
       "top_sources": [
         {
           "id": "source-722",
@@ -910,13 +952,15 @@
         }
       ],
       "evidence": [
-        "В ответе агента есть лишние слова/приписки, которых нет в правильном ответе и найденных источниках: поступить, сразу, старший.",
-        "Top-k по правильному ответу: spo_faq.json, стр. 1 (0.9133); spo_faq.json, стр. 1 (0.1898); general_faq.json, стр. 2 (0.1088)."
+        "source-722: \"Сокращенное обучение в университете после окончания колледжа не предусмотрено. Выпускники колледжа поступают на 1 курс.\""
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "nonexistent-direction",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -925,8 +969,8 @@
       "expected_error_type": "incomplete-answer",
       "actual_error_type": "incomplete-answer",
       "matched_expected": true,
-      "description": "Ответ неполный. Агент выбрал близкий источник, но передал только часть эталонного ответа.",
-      "suggested_source": "pp_spbgeu_2026_cropp.json, стр. 43, 44",
+      "description": "Агент не привёл полную информацию о процедуре поступления по целевой квоте, что делает ответ неполным.",
+      "suggested_source": "source-152",
       "top_sources": [
         {
           "id": "source-153",
@@ -970,14 +1014,17 @@
         }
       ],
       "evidence": [
-        "Ответ агента короче эталонного ответа сотрудника или не содержит важные слова из него.",
-        "Пропущенные важные слова: места, целевой, квоте, публикуются, сайте, университета, подача, заявок.",
-        "Top-k по правильному ответу: pp_spbgeu_2026_cropp.json, стр. 43, 44 (0.3269); pp_spbgeu_2026_cropp.json, стр. 43, 44 (0.3269); pp_spbgeu_2026_cropp.json, стр. 43, 44 (0.3269)."
+        "Ответ агента короче эталонного ответа сотрудника.",
+        "Пропущены слова: места, целевой, квоте, публикуются, сайте, университета, подача, заявок.",
+        "Top‑k источники: pp_spbgeu_2026_cropp.json, стр. 43‑44 (score 0.3269)."
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "incomplete-answer",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -986,8 +1033,8 @@
       "expected_error_type": "wrong-source",
       "actual_error_type": "wrong-source",
       "matched_expected": true,
-      "description": "Неправильно выбран источник. В ответе агента есть конкретная дата или адрес, который противоречит правильному ответу сотрудника.",
-      "suggested_source": "general_faq.json, стр. 2",
+      "description": "Агент использовал неверный источник, приводя информацию о другом учебном заведении, что привело к ошибке в дате и адресе.",
+      "suggested_source": "general_faq.json, страница 2 (содержит график дней открытых дверей СПбГЭУ)",
       "top_sources": [
         {
           "id": "source-360",
@@ -1031,13 +1078,17 @@
         }
       ],
       "evidence": [
-        "В ответе агента указаны даты 27 мая, а в правильном ответе - 24 июня.",
-        "Top-k по правильному ответу: general_faq.json, стр. 2 (0.386); general_faq.json, стр. 3 (0.3806); pp_spbgeu_2026_cropp.json, стр. 24, 25 (0.2367)."
+        "Агент указал 27 мая, а сотрудник – 24 июня.",
+        "Агент привёл адрес Помяловского, 2, тогда как правильный адрес – набережная канала Грибоедова, 30‑32, литер А.",
+        "Top‑k источники: general_faq.json (стр. 2, 3) и pp_spbgeu_2026_cropp.json (стр. 24‑25)."
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "wrong-source",
+        "reasonTypeLocked": true
       }
     },
     {
@@ -1046,8 +1097,8 @@
       "expected_error_type": "wrong-source",
       "actual_error_type": "wrong-source",
       "matched_expected": true,
-      "description": "Неправильно выбран источник. В ответе агента есть конкретная дата или адрес, который противоречит правильному ответу сотрудника.",
-      "suggested_source": "general_faq.json, стр. 2",
+      "description": "Ошибка возникла из‑за выбора неверного источника, содержащего данные о другом учебном заведении.",
+      "suggested_source": "spo_faq.json, страница 1 (source‑721) – содержит адрес и контактную информацию Колледжа бизнеса и технологий.",
       "top_sources": [
         {
           "id": "source-360",
@@ -1091,13 +1142,16 @@
         }
       ],
       "evidence": [
-        "В ответе агента указаны даты 24 июня, а в правильном ответе - 27 мая.",
-        "Top-k по правильному ответу: general_faq.json, стр. 2 (0.3791); spo_faq.json, стр. 1 (0.3403); spo_faq.json, стр. 1 (0.2257)."
+        "Агент указал 24 июня, а сотрудник – 27 мая.",
+        "Топ‑k источники: general_faq.json (стр. 2), spo_faq.json (стр. 1) – содержат сведения о Колледже бизнеса и технологий."
       ],
       "llm": {
-        "used": false,
-        "error": "LLM вернула 429: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        ",
-        "fallback": "LLM не ответила, используется локальная логика."
+        "used": true,
+        "provider": "pollinations",
+        "model": "openai-fast",
+        "endpoint": "https://text.pollinations.ai/openai",
+        "suggestedReasonType": "wrong-source",
+        "reasonTypeLocked": true
       }
     }
   ]

@@ -66,6 +66,18 @@ $env:OPENAI_MODEL = "gpt-4o-mini"
 
 Если нужен другой OpenAI-compatible провайдер, можно задать:
 
+### Pollinations без OpenAI-квоты
+
+OpenAI-ключ не нужен, но данные отправляются во внешний LLM-сервис:
+
+```powershell
+$env:LLM_PROVIDER = "pollinations"
+$env:LLM_MODEL = "openai-fast"
+$env:LLM_TIMEOUT_MS = "120000"
+$env:LLM_MAX_TOKENS = "1000"
+& 'C:\Users\Acer\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' run_error_analysis_tests.js --llm
+```
+
 ```powershell
 $env:LLM_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 $env:LLM_API_KEY = "ваш_api_ключ"
