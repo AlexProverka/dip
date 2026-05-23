@@ -1435,6 +1435,118 @@ function collectAgentSources(answerMessage) {
     return sources;
 }
 
+async function handleManualAnalysisSubmit(event) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const submitButton = form.querySelector('button[type="submit"]');
+    const resultBox = document.getElementById("manualAnalysisResult");
+    const question = document.getElementById("manualAnalysisQuestion")?.value.trim() || "";
+    const botAnswer = document.getElementById("manualAnalysisBotAnswer")?.value.trim() || "";
+    const sourceText = document.getElementById("manualAnalysisSource")?.value.trim() || "";
+    const adminAnswer = document.getElementById("manualAnalysisAdminAnswer")?.value.trim() || "";
+
+    if (!question || !botAnswer || !sourceText || !adminAnswer) {
+        renderManualAnalysisStatus("Заполните вопрос, ответ чат-бота, источник и правильный ответ.", true);
+        return;
+    }
+
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Анализ...";
+    }
+
+    renderManualAnalysisStatus("Агент анализирует ответ...");
+
+    try {
+        const response = await apiRequest("/api/error-analysis", {
+            method: "POST",
+            body: {
+                question,
+                agentAnswer: botAnswer,
+                agentSources: [{
+                    title: sourceText.slice(0, 140),
+                    text: sourceText
+                }],
+                adminAnswer,
+                topK: 5
+            }
+        });
+
+        renderManualAnalysisResult(response.analysis, response.stats);
+    } catch (error) {
+        console.error("Ошибка ручного анализа:", error);
+        renderManualAnalysisStatus(`Не удалось выполнить анализ: ${error.message}`, true);
+    } finally {
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = "Проанализировать";
+        }
+        if (resultBox) resultBox.hidden = false;
+    }
+}
+
+function renderManualAnalysisStatus(text, isError = false) {
+    const resultBox = document.getElementById("manualAnalysisResult");
+    if (!resultBox) return;
+
+    resultBox.hidden = false;
+    resultBox.innerHTML = `<div class="manual-analysis-status ${isError ? "error" : ""}">${escapeHtmlInline(text)}</div>`;
+}
+
+function renderManualAnalysisResult(analysis = {}, stats = {}) {
+    const resultBox = document.getElementById("manualAnalysisResult");
+    if (!resultBox) return;
+
+    const evidence = (analysis.evidence || [])
+        .slice(0, 4)
+        .map(item => `<li>${escapeHtmlInline(item)}</li>`)
+        .join("");
+    const topSources = (analysis.topSources || [])
+        .slice(0, 5)
+        .map(source => `<li>${escapeHtmlInline(formatAnalysisSource(source))}</li>`)
+        .join("");
+    const llmText = analysis.llm?.used
+        ? `${analysis.llm.provider || "LLM"} / ${analysis.llm.model || "model"}`
+        : "локальный fallback";
+
+    resultBox.hidden = false;
+    resultBox.innerHTML = `
+        <strong>${escapeHtmlInline(analysis.reasonTitle || "Результат анализа")}</strong>
+        <p>${escapeHtmlInline(analysis.reasonText || analysis.description || "Описание ошибки не сформировано.")}</p>
+        ${analysis.recommendation ? `<p><b>Что сделать:</b> ${escapeHtmlInline(analysis.recommendation)}</p>` : ""}
+        ${analysis.suggestedSource ? `<p><b>Источник по исправлению:</b> ${escapeHtmlInline(analysis.suggestedSource)}</p>` : ""}
+        <p><b>LLM:</b> ${escapeHtmlInline(llmText)}</p>
+        ${stats.textSources ? `<p><b>Текстовых источников в базе:</b> ${escapeHtmlInline(String(stats.textSources))}</p>` : ""}
+        ${topSources ? `<p><b>Top-k источники:</b></p><ul>${topSources}</ul>` : ""}
+        ${evidence ? `<p><b>Доказательства:</b></p><ul>${evidence}</ul>` : ""}
+    `;
+}
+
+function formatAnalysisSource(source = {}) {
+    const title = source.fileName || source.id || "источник";
+    const page = source.pageNumber ? `, стр. ${source.pageNumber}` : "";
+    const score = source.score ? ` — ${source.score}` : "";
+    return `${title}${page}${score}`;
+}
+
+function clearManualAnalysisForm() {
+    document.getElementById("manualAnalysisForm")?.reset();
+    const resultBox = document.getElementById("manualAnalysisResult");
+    if (resultBox) {
+        resultBox.hidden = true;
+        resultBox.innerHTML = "";
+    }
+}
+
+function openManualAnalysisTester() {
+    const drawer = document.getElementById("reviewDrawer");
+    if (drawer) drawer.hidden = false;
+
+    renderReviewPanel();
+    document.getElementById("manualAnalysisBotAnswer")?.focus();
+}
+
 function renderReviewPanel() {
     const list = document.getElementById("reviewList");
     if (!list) return;
@@ -1735,6 +1847,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("reviewDrawer").hidden = false;
         renderReviewPanel();
     });
+
+    document.getElementById("manualAnalysisBtn")?.addEventListener("click", openManualAnalysisTester);
+    document.getElementById("manualAnalysisForm")?.addEventListener("submit", handleManualAnalysisSubmit);
+    document.getElementById("manualAnalysisClear")?.addEventListener("click", clearManualAnalysisForm);
 
     document.getElementById("reviewDrawerClose").addEventListener("click", () => {
         document.getElementById("reviewDrawer").hidden = true;

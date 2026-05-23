@@ -170,6 +170,13 @@ body {
     font-size: 11px;
 }
 
+.reviews-btn.tester-btn {
+    justify-content: center;
+    border-color: #d8e2ee;
+    background: #ffffff;
+    color: var(--geu-purple);
+}
+
 /* Заголовок истории диалогов */
 .chats-header {
     padding: 12px 20px;
@@ -705,6 +712,136 @@ body {
 .review-drawer-header p {
     color: var(--geu-muted);
     font-size: 13px;
+}
+
+.manual-analysis-panel {
+    padding: 14px;
+    border-bottom: 1px solid var(--geu-line);
+    background: #f8fafc;
+}
+
+.manual-analysis-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.manual-analysis-heading h4 {
+    color: var(--geu-purple);
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.manual-analysis-heading p {
+    color: var(--geu-muted);
+    font-size: 12px;
+}
+
+.manual-analysis-heading span {
+    flex: 0 0 auto;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #eef8b8;
+    color: #52620a;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.manual-analysis-form {
+    display: grid;
+    gap: 10px;
+}
+
+.manual-analysis-form label {
+    display: grid;
+    gap: 5px;
+    color: var(--geu-ink);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.manual-analysis-form textarea {
+    width: 100%;
+    min-height: 68px;
+    max-height: 180px;
+    resize: vertical;
+    padding: 9px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--geu-ink);
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.manual-analysis-form textarea:focus {
+    outline: none;
+    border-color: var(--geu-turquoise);
+    box-shadow: 0 0 0 3px rgba(0, 166, 180, 0.14);
+}
+
+.manual-analysis-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.manual-analysis-actions button {
+    border: none;
+    border-radius: 8px;
+    padding: 9px 12px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 12px;
+}
+
+.manual-analysis-actions button[type="submit"] {
+    background: var(--geu-purple);
+    color: #ffffff;
+}
+
+.manual-analysis-actions button[type="button"] {
+    background: #e9eef4;
+    color: var(--geu-muted);
+}
+
+.manual-analysis-actions button:disabled {
+    cursor: wait;
+    opacity: 0.72;
+}
+
+.manual-analysis-result {
+    margin-top: 12px;
+    padding: 10px;
+    border: 1px solid #dbe4ee;
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--geu-muted);
+    font-size: 12px;
+}
+
+.manual-analysis-result strong {
+    color: var(--geu-purple);
+}
+
+.manual-analysis-result p {
+    margin-top: 6px;
+}
+
+.manual-analysis-result ul {
+    margin: 8px 0 0 18px;
+}
+
+.manual-analysis-status {
+    font-weight: 800;
+    color: var(--geu-purple);
+}
+
+.manual-analysis-status.error {
+    color: #991b1b;
 }
 
 /* Фильтр журнала по типу оценки */

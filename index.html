@@ -8,7 +8,7 @@
     <link rel="icon" href="spbgeu-icon.png" type="image/png">
 
     <!-- Подключение CSS-стилей интерфейса -->
-    <link rel="stylesheet" href="style.css?v=20260515-2">
+    <link rel="stylesheet" href="style.css?v=20260524-1">
 </head>
 <body>
 
@@ -47,6 +47,9 @@
             <button class="reviews-btn" id="reviewsToggle">
                 Журнал проверок
                 <span id="reviewCounter">0</span>
+            </button>
+            <button class="reviews-btn tester-btn" id="manualAnalysisBtn">
+                Тест анализа
             </button>
         </div>
 
@@ -123,6 +126,38 @@
         </div>
         <button class="drawer-close" id="reviewDrawerClose" title="Закрыть">×</button>
     </div>
+    <div class="manual-analysis-panel" id="manualAnalysisPanel">
+        <div class="manual-analysis-heading">
+            <div>
+                <h4>Тест анализа ошибки</h4>
+                <p>Ручной ввод для проверки агента без диалога с чат-ботом.</p>
+            </div>
+            <span>LLM</span>
+        </div>
+        <form class="manual-analysis-form" id="manualAnalysisForm">
+            <label>
+                Вопрос абитуриента
+                <textarea id="manualAnalysisQuestion" required placeholder="Например: Есть ли общежития?"></textarea>
+            </label>
+            <label>
+                Ответ чат-бота
+                <textarea id="manualAnalysisBotAnswer" required placeholder="Вставьте сюда ответ, который нужно проверить"></textarea>
+            </label>
+            <label>
+                Источник ответа чат-бота
+                <textarea id="manualAnalysisSource" required placeholder="Название, фрагмент или ссылка на источник"></textarea>
+            </label>
+            <label>
+                Правильный ответ сотрудника
+                <textarea id="manualAnalysisAdminAnswer" required placeholder="Вставьте эталонный ответ приемной комиссии"></textarea>
+            </label>
+            <div class="manual-analysis-actions">
+                <button type="submit">Проанализировать</button>
+                <button type="button" id="manualAnalysisClear">Очистить</button>
+            </div>
+        </form>
+        <div class="manual-analysis-result" id="manualAnalysisResult" hidden></div>
+    </div>
     <div class="review-filters" id="reviewFilters">
         <button class="review-filter active" data-review-filter="all">Все</button>
         <button class="review-filter" data-review-filter="incorrect">Неправильные</button>
@@ -132,6 +167,6 @@
 </div>
 
 <!-- Подключение JavaScript-логики чата -->
-<script src="script.js?v=20260515-3"></script>
+<script src="script.js?v=20260524-1"></script>
 </body>
 </html>
