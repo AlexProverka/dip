@@ -90,7 +90,7 @@ function searchSources(query, topK = DEFAULT_TOP_K) {
         return [];
     }
 
-    return index.docs
+    const ranked = index.docs
         .map(doc => {
             const cosine = cosineSimilarity(queryVector, queryNorm, doc.vector, doc.vectorNorm);
             const overlap = tokenOverlap(queryTokens, doc.tokens);
@@ -109,7 +109,9 @@ function searchSources(query, topK = DEFAULT_TOP_K) {
             };
         })
         .filter(item => item.score > 0)
-        .sort((a, b) => b.score - a.score)
+        .sort((a, b) => b.score - a.score);
+
+    return dedupeSearchResults(ranked)
         .slice(0, Math.max(1, Number(topK) || DEFAULT_TOP_K));
 }
 
@@ -524,6 +526,7 @@ function buildLlmPayload(config, input, baseAnalysis, useResponseFormat) {
                 content: [
                     "Keep reasonType exactly equal to localAnalysis.reasonType; improve only explanation, recommendation, evidence, suggestedSource, and description.",
                     "In evidence, quote short text fragments from topSources or agentSources. Do not use only file names, source ids, or page numbers as evidence.",
+                    "If agentSources contains text, treat it as the agent source even when fileName/pageNumber are empty. Never claim the source is absent only because a file, page, or URL is not provided.",
                     "Write all user-facing fields in Russian. Keep the JSON compact and valid.",
                     "Ты LLM-агент анализа ошибок для приемной комиссии.",
                     "Используй только переданные вопрос, ответ агента, источник агента, правильный ответ сотрудника и top-k источники.",
@@ -644,12 +647,13 @@ function mergeLlmAnalysis(baseAnalysis, llmAnalysis) {
     const reasonTitle = useLlmText
         ? (llmAnalysis.reasonTitle || reasonTitleByType(reasonType) || baseAnalysis.reasonTitle)
         : baseAnalysis.reasonTitle;
-    const reasonText = useLlmText
+    const hasAgentSource = baseAnalysis.reasonType !== "missing-agent-source";
+    const reasonText = sanitizeSourceMetadataWording(useLlmText
         ? (llmAnalysis.reasonText || llmAnalysis.description || baseAnalysis.reasonText)
-        : baseAnalysis.reasonText;
-    const recommendation = useLlmText
+        : baseAnalysis.reasonText, hasAgentSource) || baseAnalysis.reasonText;
+    const recommendation = sanitizeSourceMetadataWording(useLlmText
         ? (llmAnalysis.recommendation || baseAnalysis.recommendation)
-        : baseAnalysis.recommendation;
+        : baseAnalysis.recommendation, hasAgentSource) || baseAnalysis.recommendation;
     const rawEvidence = useLlmText && llmAnalysis.evidence?.length ? llmAnalysis.evidence : baseAnalysis.evidence;
     const evidence = normalizeEvidenceForFragments(rawEvidence, baseAnalysis.topSources);
     const suggestedSource = useLlmText ? (llmAnalysis.suggestedSource || baseAnalysis.suggestedSource) : baseAnalysis.suggestedSource;
@@ -665,7 +669,7 @@ function mergeLlmAnalysis(baseAnalysis, llmAnalysis) {
         evidence,
         suggestedSource,
         summary,
-        description: useLlmText ? (llmAnalysis.description || summary) : summary,
+        description: sanitizeSourceMetadataWording(useLlmText ? (llmAnalysis.description || summary) : summary, hasAgentSource) || summary,
         llm: {
             used: true,
             provider: config.provider,
@@ -736,6 +740,12 @@ function normalizeEvidenceText(item) {
     const text = String(item || "").replace(/\s+/g, " ").trim();
     if (!text) return "";
 
+    const missingMetadataMatch = text.match(/(?:без реального файла|без указания файла|без файла|без номера страницы|не указан(?:ы)? файл|не указан(?:ы)? номер(?:а)? страницы)/i);
+    if (missingMetadataMatch) {
+        const quoted = text.match(/[«"]([^»"]{8,})[»"]/);
+        return quoted ? `Фрагмент источника агента: «${quoted[1]}»` : "";
+    }
+
     const agentSourceMatch = text.match(/^agent source\s*:?\s*["«](.+?)["»]\.?$/i);
     if (agentSourceMatch) {
         return `Фрагмент источника агента: «${agentSourceMatch[1]}»`;
@@ -758,9 +768,41 @@ function isLocationOnlyEvidence(item) {
         lower.startsWith("top-k") ||
         lower.includes("соответствует страниц") ||
         lower.includes("указаны страницы") ||
+        lower.includes("без реального файла") ||
+        lower.includes("без указания файла") ||
+        lower.includes("без номера страницы") ||
         lower.includes("файла pp_") ||
         (lower.includes(".json") && (lower.includes("стр.") || lower.includes("страниц")))
     );
+}
+
+function dedupeSearchResults(results) {
+    const seen = new Set();
+
+    return results.filter(item => {
+        const key = sourceDuplicateKey(item);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+}
+
+function sourceDuplicateKey(source) {
+    const textKey = normalizeText(source?.text || source?.preview || "");
+    if (textKey) return textKey.slice(0, 1200);
+    return normalizeText(`${source?.fileName || ""} ${source?.pageNumber || ""}`) || source?.id || "";
+}
+
+function sanitizeSourceMetadataWording(text, hasAgentSource) {
+    const value = String(text || "").replace(/\s+/g, " ").trim();
+    if (!value || !hasAgentSource) return value;
+
+    return value
+        .replace(/,\s*но\s+в\s+агентских\s+источниках[^.!?]*(?:без\s+реального\s+файла|без\s+указания\s+файла|без\s+файла|без\s+номера\s+страницы|номер[а]?\s+страницы)[^.!?]*/gi, "")
+        .replace(/[^.!?]*(?:без\s+реального\s+файла|без\s+указания\s+файла|без\s+файла|без\s+номера\s+страницы|не\s+указан[аы]?\s+(?:файл|номер[а]?\s+страницы))[^.!?]*[.!?]/gi, "")
+        .replace(/источник(?:и)?\s+агента\s+не\s+(?:сохранен|сохранены|указан|указаны)[^.!?]*[.!?]/gi, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
 }
 
 function formatSourceFragmentEvidence(source, index = 0, title = "Фрагмент найденного источника") {
