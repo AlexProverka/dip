@@ -716,7 +716,7 @@ function topEvidence(sources, title = "Фрагмент найденного и�
 
 function normalizeEvidenceForFragments(evidence, topSources = []) {
     const cleaned = (Array.isArray(evidence) ? evidence : [])
-        .map(item => String(item || "").replace(/\s+/g, " ").trim())
+        .map(normalizeEvidenceText)
         .filter(Boolean)
         .filter(item => !isLocationOnlyEvidence(item));
 
@@ -730,6 +730,23 @@ function normalizeEvidenceForFragments(evidence, topSources = []) {
     }
 
     return [...new Set(cleaned)].slice(0, 6);
+}
+
+function normalizeEvidenceText(item) {
+    const text = String(item || "").replace(/\s+/g, " ").trim();
+    if (!text) return "";
+
+    const agentSourceMatch = text.match(/^agent source\s*:?\s*["«](.+?)["»]\.?$/i);
+    if (agentSourceMatch) {
+        return `Фрагмент источника агента: «${agentSourceMatch[1]}»`;
+    }
+
+    const topSourceMatch = text.match(/^top source\s*\d*\s*:?\s*["«](.+?)["»]\.?$/i);
+    if (topSourceMatch) {
+        return `Фрагмент найденного источника: «${topSourceMatch[1]}»`;
+    }
+
+    return text;
 }
 
 function isLocationOnlyEvidence(item) {
