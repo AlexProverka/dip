@@ -1531,10 +1531,17 @@ function renderManualAnalysisResult(analysis = {}, stats = {}) {
 }
 
 function formatAnalysisSource(source = {}) {
-    const title = source.fileName || source.id || "источник";
-    const page = source.pageNumber ? `, стр. ${source.pageNumber}` : "";
-    const score = source.score ? ` — ${source.score}` : "";
-    return `${title}${page}${score}`;
+    const fragment = formatAnalysisFragment(source.preview || source.text || source.fragment || "");
+    const score = source.score ? ` (сходство: ${source.score})` : "";
+    if (fragment) return `Фрагмент: «${fragment}»${score}`;
+
+    return `${source.id || "источник"}${score}`;
+}
+
+function formatAnalysisFragment(text, maxLength = 280) {
+    const normalized = String(text || "").replace(/\s+/g, " ").trim();
+    if (normalized.length <= maxLength) return normalized;
+    return `${normalized.slice(0, maxLength).trim()}...`;
 }
 
 function clearManualAnalysisForm() {
@@ -1595,7 +1602,7 @@ function renderReviewAnalysis(review) {
             .join("");
         const topSources = (review.analysis.topSources || [])
             .slice(0, 3)
-            .map(source => `<li>${escapeHtmlInline(`${source.fileName || "источник"}${source.pageNumber ? `, стр. ${source.pageNumber}` : ""} — ${source.score}`)}</li>`)
+            .map(source => `<li>${escapeHtmlInline(formatAnalysisSource(source))}</li>`)
             .join("");
 
         return `

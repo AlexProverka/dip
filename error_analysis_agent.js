@@ -189,7 +189,7 @@ function analyzeErrorCase({ question, agentAnswer, agentSources, adminAnswer, to
     }
 
     if (bestSource && sourceOverlap === 0) {
-        evidence.push("Источник агента не совпал с top-k источниками, найденными по правильному ответу сотрудника.");
+        evidence.push("Источник агента не совпал с текстовыми фрагментами, найденными по правильному ответу сотрудника.");
         evidence.push(...topEvidence(topSources));
         if (agentSourceText) evidence.push(`Сохраненный источник агента: ${makePreview(agentSourceText, 260)}`);
         return buildAnalysis({
@@ -222,7 +222,7 @@ function analyzeErrorCase({ question, agentAnswer, agentSources, adminAnswer, to
 
     if (isLikelyMergedRows({ normalizedAgentSources, answerMatchesManySources, sourceOverlap, answerSearch, topSources, agentAnswer })) {
         evidence.push("Ответ агента похож сразу на несколько разных источников или содержит несколько сохраненных источников.");
-        evidence.push(...topEvidence(answerSearch.slice(0, 3), "Источники, на которые похож ответ агента"));
+        evidence.push(...topEvidence(answerSearch.slice(0, 3), "Фрагмент, на который похож ответ агента"));
         return buildAnalysis({
             reasonType: "merged-rows",
             reasonTitle: "Объединил несколько строк в одну",
@@ -241,7 +241,7 @@ function analyzeErrorCase({ question, agentAnswer, agentSources, adminAnswer, to
         reasonTitle: "Причина требует проверки",
         reasonText: "Автоматический анализ не нашел уверенной причины из заданного списка.",
         recommendation: "Посмотреть top-k источники, ответ агента и эталонный ответ сотрудника вручную.",
-        evidence,
+        evidence: normalizeEvidenceForFragments(evidence, topSources),
         suggestedSource: formatSourceTitle(bestSource),
         topSources
     });
@@ -523,6 +523,7 @@ function buildLlmPayload(config, input, baseAnalysis, useResponseFormat) {
                 role: "system",
                 content: [
                     "Keep reasonType exactly equal to localAnalysis.reasonType; improve only explanation, recommendation, evidence, suggestedSource, and description.",
+                    "In evidence, quote short text fragments from topSources or agentSources. Do not use only file names, source ids, or page numbers as evidence.",
                     "Write all user-facing fields in Russian. Keep the JSON compact and valid.",
                     "Ты LLM-агент анализа ошибок для приемной комиссии.",
                     "Используй только переданные вопрос, ответ агента, источник агента, правильный ответ сотрудника и top-k источники.",
@@ -649,7 +650,8 @@ function mergeLlmAnalysis(baseAnalysis, llmAnalysis) {
     const recommendation = useLlmText
         ? (llmAnalysis.recommendation || baseAnalysis.recommendation)
         : baseAnalysis.recommendation;
-    const evidence = useLlmText && llmAnalysis.evidence?.length ? llmAnalysis.evidence : baseAnalysis.evidence;
+    const rawEvidence = useLlmText && llmAnalysis.evidence?.length ? llmAnalysis.evidence : baseAnalysis.evidence;
+    const evidence = normalizeEvidenceForFragments(rawEvidence, baseAnalysis.topSources);
     const suggestedSource = useLlmText ? (llmAnalysis.suggestedSource || baseAnalysis.suggestedSource) : baseAnalysis.suggestedSource;
     const summary = `${reasonTitle}. ${reasonText}`;
     const config = getLlmConfig();
@@ -701,15 +703,55 @@ function reasonTitleByType(reasonType) {
     }[reasonType];
 }
 
-function topEvidence(sources, title = "Top-k по правильному ответу") {
+function topEvidence(sources, title = "Фрагмент найденного источника") {
     if (!sources || !sources.length) return ["По правильному ответу не найдено близких источников."];
 
-    return [
-        `${title}: ${sources
-            .slice(0, 3)
-            .map(source => `${formatSourceTitle(source)} (${source.score})`)
-            .join("; ")}.`
-    ];
+    const fragments = sources
+        .slice(0, 3)
+        .map((source, index) => formatSourceFragmentEvidence(source, index, title))
+        .filter(Boolean);
+
+    return fragments.length ? fragments : ["По правильному ответу не найдено текстовых фрагментов."];
+}
+
+function normalizeEvidenceForFragments(evidence, topSources = []) {
+    const cleaned = (Array.isArray(evidence) ? evidence : [])
+        .map(item => String(item || "").replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+        .filter(item => !isLocationOnlyEvidence(item));
+
+    const hasTextFragment = cleaned.some(item => /«[^»]{40,}»/.test(item) || item.toLowerCase().includes("фрагмент"));
+    if (!hasTextFragment) {
+        topSources
+            .slice(0, 2)
+            .map((source, index) => formatSourceFragmentEvidence(source, index))
+            .filter(Boolean)
+            .forEach(item => cleaned.push(item));
+    }
+
+    return [...new Set(cleaned)].slice(0, 6);
+}
+
+function isLocationOnlyEvidence(item) {
+    const lower = String(item || "").toLowerCase();
+    const hasQuotedFragment = /«[^»]{40,}»/.test(item);
+    if (hasQuotedFragment) return false;
+
+    return (
+        lower.startsWith("top-k") ||
+        lower.includes("соответствует страниц") ||
+        lower.includes("указаны страницы") ||
+        lower.includes("файла pp_") ||
+        (lower.includes(".json") && (lower.includes("стр.") || lower.includes("страниц")))
+    );
+}
+
+function formatSourceFragmentEvidence(source, index = 0, title = "Фрагмент найденного источника") {
+    const fragment = makePreview(source?.preview || source?.text || "", 360);
+    if (!fragment) return "";
+
+    const score = source?.score ? ` Сходство: ${source.score}.` : "";
+    return `${title} ${index + 1}: «${fragment}»${score}`;
 }
 
 function formatSourceTitle(source) {
