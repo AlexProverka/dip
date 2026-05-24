@@ -690,6 +690,8 @@ body {
     box-shadow: -12px 0 30px rgba(15, 23, 42, 0.16);
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .review-drawer[hidden] {
@@ -715,6 +717,7 @@ body {
 }
 
 .manual-analysis-panel {
+    flex: 0 0 auto;
     padding: 14px;
     border-bottom: 1px solid var(--geu-line);
     background: #f8fafc;
@@ -815,12 +818,16 @@ body {
 
 .manual-analysis-result {
     margin-top: 12px;
+    max-height: min(48vh, 460px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 10px;
     border: 1px solid #dbe4ee;
     border-radius: 10px;
     background: #ffffff;
     color: var(--geu-muted);
     font-size: 12px;
+    overflow-wrap: anywhere;
 }
 
 .manual-analysis-result strong {
@@ -833,6 +840,10 @@ body {
 
 .manual-analysis-result ul {
     margin: 8px 0 0 18px;
+}
+
+.manual-analysis-result li + li {
+    margin-top: 4px;
 }
 
 .manual-analysis-status {

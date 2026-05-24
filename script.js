@@ -1492,6 +1492,9 @@ function renderManualAnalysisStatus(text, isError = false) {
 
     resultBox.hidden = false;
     resultBox.innerHTML = `<div class="manual-analysis-status ${isError ? "error" : ""}">${escapeHtmlInline(text)}</div>`;
+    requestAnimationFrame(() => {
+        resultBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
 }
 
 function renderManualAnalysisResult(analysis = {}, stats = {}) {
@@ -1521,6 +1524,10 @@ function renderManualAnalysisResult(analysis = {}, stats = {}) {
         ${topSources ? `<p><b>Top-k источники:</b></p><ul>${topSources}</ul>` : ""}
         ${evidence ? `<p><b>Доказательства:</b></p><ul>${evidence}</ul>` : ""}
     `;
+    resultBox.scrollTop = 0;
+    requestAnimationFrame(() => {
+        resultBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
 }
 
 function formatAnalysisSource(source = {}) {
