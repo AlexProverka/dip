@@ -685,7 +685,7 @@ function parseLlmJson(content) {
 function normalizeLlmSuggestedSource(value) {
     if (!value) return "";
     if (typeof value === "string") {
-        return /^(agentSources|topSources|sources)$/i.test(value.trim()) ? "" : value;
+        return /^(agentSources|topSources|sources|фрагмент)$/i.test(value.trim()) ? "" : value;
     }
     if (Array.isArray(value)) {
         return value
@@ -723,7 +723,9 @@ function mergeLlmAnalysis(baseAnalysis, llmAnalysis) {
         : baseAnalysis.recommendation, hasAgentSource) || baseAnalysis.recommendation;
     const rawEvidence = useLlmText && llmAnalysis.evidence?.length ? llmAnalysis.evidence : baseAnalysis.evidence;
     const evidence = normalizeEvidenceForFragments(rawEvidence, baseAnalysis.topSources);
-    const suggestedSource = useLlmText ? (llmAnalysis.suggestedSource || baseAnalysis.suggestedSource) : baseAnalysis.suggestedSource;
+    const suggestedSource = baseAnalysis.suggestedSource === "Переданный фрагмент источника агента"
+        ? baseAnalysis.suggestedSource
+        : (useLlmText ? (llmAnalysis.suggestedSource || baseAnalysis.suggestedSource) : baseAnalysis.suggestedSource);
     const summary = `${reasonTitle}. ${reasonText}`;
     const config = getLlmConfig();
 
