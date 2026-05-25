@@ -119,7 +119,7 @@ function analyzeErrorCase({ question, agentAnswer, agentSources, adminAnswer, to
     const normalizedAgentSources = normalizeAgentSources(agentSources);
     const topSources = searchSources(adminAnswer || question || "", topK);
     const bestSource = topSources[0] || null;
-    const agentSourceText = normalizedAgentSources.map(sourceToText).join("\n");
+    const agentSourceText = normalizedAgentSources.map(sourceContentText).join("\n");
     const topSourceText = topSources.map(source => source.text).join("\n");
     const sourceOverlap = topSources.filter(source => sourceMatchesAgent(source, normalizedAgentSources)).length;
     const answerSearch = searchSources(agentAnswer || "", topK);
@@ -186,6 +186,26 @@ function analyzeErrorCase({ question, agentAnswer, agentSources, adminAnswer, to
             recommendation: "Для вопросов с датами и адресами проверять совпадение конкретного факта с top-k источником по правильному ответу.",
             evidence,
             suggestedSource: formatSourceTitle(bestSource),
+            topSources
+        });
+    }
+
+    const sourceContradiction = detectSourceAnswerContradiction(agentAnswer, agentSourceText, adminAnswer);
+    if (sourceContradiction) {
+        evidence.push(`Ответ агента: «${makePreview(agentAnswer, 220)}»`);
+        evidence.push(`Переданный фрагмент источника: «${makePreview(agentSourceText, 260)}»`);
+        evidence.push(`Эталонный ответ сотрудника: «${makePreview(adminAnswer, 260)}»`);
+        if (sourceContradiction.extraTerms.length) {
+            evidence.push(`В ответе появились слова или ограничения, которых нет в источнике: ${sourceContradiction.extraTerms.join(", ")}.`);
+        }
+        evidence.push(...topEvidence(topSources));
+        return buildAnalysis({
+            reasonType: "nonexistent-direction",
+            reasonTitle: "Ответ противоречит переданному источнику",
+            reasonText: `Агент получил фрагмент источника, где сказано: «${makePreview(sourceContradiction.referenceFragment, 220)}». Но в ответе он написал: «${makePreview(agentAnswer, 220)}». Это не проблема отсутствующего источника: источник был передан, но агент исказил его смысл и добавил неподтвержденное ограничение.`,
+            recommendation: "При генерации ответа проверять, что итоговая формулировка не меняет условия из выбранного фрагмента. Если источник и ответ сотрудника совпадают, агент должен повторить их смысл без новых ограничений и уточнений.",
+            evidence,
+            suggestedSource: "Переданный фрагмент источника агента",
             topSources
         });
     }
@@ -306,6 +326,12 @@ function sourceToText(source) {
     ].filter(Boolean).join(" ");
 }
 
+function sourceContentText(source) {
+    return [source.text, source.title]
+        .filter(Boolean)
+        .sort((a, b) => b.length - a.length)[0] || "";
+}
+
 function sourceMatchesAgent(source, agentSources) {
     const sourceTitle = formatSourceTitle(source).toLowerCase();
     const sourceText = `${source.fileName} ${source.pageNumber} ${source.preview}`.toLowerCase();
@@ -378,6 +404,43 @@ function detectSpecificFactConflict(agentAnswer, adminAnswer) {
     }
 
     return "";
+}
+
+function detectSourceAnswerContradiction(agentAnswer, agentSourceText, adminAnswer) {
+    const answer = normalizeText(agentAnswer);
+    const source = normalizeText(agentSourceText);
+    const admin = normalizeText(adminAnswer);
+    if (!answer || !source) return null;
+
+    const reference = `${source} ${admin}`.trim();
+    const referenceTokens = meaningfulTokens(reference);
+    const answerTokens = meaningfulTokens(answer);
+    const overlapWithSource = tokenOverlap(answerTokens, meaningfulTokens(source));
+    const overlapWithAdmin = admin ? tokenOverlap(answerTokens, meaningfulTokens(admin)) : 0;
+    const extraTerms = answerTokens
+        .filter(term => !referenceTokens.includes(term))
+        .filter(term => !STOP_WORDS.has(term))
+        .slice(0, 8);
+
+    const restrictionTerms = [
+        "лишь", "только", "исключительно", "аспирант", "аспирантам", "магистр", "магистрам",
+        "бакалавр", "бакалаврам", "всем", "очной", "заочной", "студентам"
+    ];
+    const directContradiction =
+        (answer.includes("лишь") || answer.includes("только") || answer.includes("исключительно")) &&
+        (source.includes("всем") || admin.includes("всем")) &&
+        extraTerms.length > 0;
+
+    const sourceAndAdminAgree = !admin || tokenOverlap(meaningfulTokens(source), meaningfulTokens(admin)) >= 0.55;
+
+    if (sourceAndAdminAgree && directContradiction && overlapWithSource < 0.75 && overlapWithAdmin < 0.75) {
+        return {
+            extraTerms,
+            referenceFragment: agentSourceText || adminAnswer
+        };
+    }
+
+    return null;
 }
 
 const DATE_PATTERNS = [
@@ -525,6 +588,8 @@ function buildLlmPayload(config, input, baseAnalysis, useResponseFormat) {
                 role: "system",
                 content: [
                     "Keep reasonType exactly equal to localAnalysis.reasonType; improve only explanation, recommendation, evidence, suggestedSource, and description.",
+                    "reasonText must be a connected explanation of 2-4 sentences: say what the agent answered, what the provided source/admin answer says, and why this is a contradiction or distortion.",
+                    "recommendation must be concrete and tied to the case, not a generic request for manual checking.",
                     "In evidence, quote short text fragments from topSources or agentSources. Do not use only file names, source ids, or page numbers as evidence.",
                     "If agentSources contains text, treat it as the agent source even when fileName/pageNumber are empty. Never claim the source is absent only because a file, page, or URL is not provided.",
                     "Write all user-facing fields in Russian. Keep the JSON compact and valid.",
@@ -619,7 +684,9 @@ function parseLlmJson(content) {
 
 function normalizeLlmSuggestedSource(value) {
     if (!value) return "";
-    if (typeof value === "string") return value;
+    if (typeof value === "string") {
+        return /^(agentSources|topSources|sources)$/i.test(value.trim()) ? "" : value;
+    }
     if (Array.isArray(value)) {
         return value
             .map(normalizeLlmSuggestedSource)
