@@ -7,7 +7,6 @@ const {
     analyzeErrorCase,
     analyzeErrorCaseWithLlm,
     getSourceStats,
-    prepareEmbeddingIndex,
     searchSources
 } = require("./error_analysis_agent");
 
@@ -581,13 +580,5 @@ server.listen(PORT, HOST, () => {
     if (networkUrls.length > 0) {
         console.log("Адрес для просмотра с другого устройства в этой же сети:");
         networkUrls.forEach(url => console.log(`- ${url}`));
-    }
-
-    if (process.env.EMBEDDING_PRELOAD !== "0") {
-        setTimeout(() => {
-            prepareEmbeddingIndex()
-                .then(index => console.log(`Embedding index ready: ${index.docs.length} fragments`))
-                .catch(error => console.error(`Embedding index warmup failed: ${error.message}`));
-        }, 1000);
     }
 });

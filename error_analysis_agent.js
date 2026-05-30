@@ -15,7 +15,8 @@ const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL || DEFAULT_EMBEDDING_MODEL;
 const EMBEDDING_INDEX_PATH = process.env.EMBEDDING_INDEX_PATH || path.join(__dirname, "data", "source_embedding_index.json");
 const EMBEDDING_MODEL_CACHE_DIR = process.env.TRANSFORMERS_CACHE || path.join(__dirname, "data", "transformers-cache");
 const EMBEDDING_DISABLED = process.env.EMBEDDING_DISABLED === "1";
-const EMBEDDING_AUTO_INSTALL = process.env.EMBEDDING_AUTO_INSTALL !== "0";
+const EMBEDDING_AUTO_INSTALL = process.env.EMBEDDING_AUTO_INSTALL === "1";
+const EMBEDDING_BUILD_ON_DEMAND = process.env.EMBEDDING_BUILD_ON_DEMAND === "1";
 const EMBEDDING_DEPENDENCIES = [
     "@xenova/transformers@^2.17.2",
     "onnxruntime-node@^1.26.0",
@@ -187,14 +188,20 @@ async function searchSourcesByEmbeddings(query, topK = DEFAULT_TOP_K) {
         .slice(0, Math.max(1, Number(topK) || DEFAULT_TOP_K));
 }
 
-async function loadEmbeddingIndex() {
+async function loadEmbeddingIndex(options = {}) {
     if (cachedEmbeddingIndexPromise) return cachedEmbeddingIndexPromise;
 
-    cachedEmbeddingIndexPromise = buildOrLoadEmbeddingIndex();
-    return cachedEmbeddingIndexPromise;
+    cachedEmbeddingIndexPromise = buildOrLoadEmbeddingIndex(options);
+
+    try {
+        return await cachedEmbeddingIndexPromise;
+    } catch (error) {
+        cachedEmbeddingIndexPromise = null;
+        throw error;
+    }
 }
 
-async function buildOrLoadEmbeddingIndex() {
+async function buildOrLoadEmbeddingIndex({ allowBuild = EMBEDDING_BUILD_ON_DEMAND } = {}) {
     const sourceIndex = loadSourceIndex();
     const sourceSignature = buildSourceSignature(sourceIndex);
     const savedIndex = readSavedEmbeddingIndex(sourceSignature);
@@ -219,6 +226,10 @@ async function buildOrLoadEmbeddingIndex() {
                 })
                 .filter(Boolean)
         };
+    }
+
+    if (!allowBuild) {
+        throw new Error("Embedding index is not ready. Run npm run build:embeddings before enabling semantic search.");
     }
 
     const items = [];
@@ -1334,6 +1345,6 @@ module.exports = {
     analyzeErrorCase,
     analyzeErrorCaseWithLlm,
     getSourceStats,
-    prepareEmbeddingIndex: loadEmbeddingIndex,
+    prepareEmbeddingIndex: () => loadEmbeddingIndex({ allowBuild: true }),
     searchSources
 };
