@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node --no-warnings server.js",
     "dev": "node --no-warnings server.js",
-    "build:embeddings": "node --no-warnings build_embedding_index.js"
+    "build:embeddings": "node --no-warnings build_embedding_index.js",
+    "postinstall": "node --no-warnings build_embedding_index.js || echo Embedding index build skipped"
   },
   "engines": {
     "node": ">=22.19.0"
