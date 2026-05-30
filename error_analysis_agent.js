@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const { execFile } = require("child_process");
 
 const DEFAULT_TOP_K = 5;
 const MAX_SOURCE_PREVIEW = 520;
@@ -14,6 +15,12 @@ const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL || DEFAULT_EMBEDDING_MODEL;
 const EMBEDDING_INDEX_PATH = process.env.EMBEDDING_INDEX_PATH || path.join(__dirname, "data", "source_embedding_index.json");
 const EMBEDDING_MODEL_CACHE_DIR = process.env.TRANSFORMERS_CACHE || path.join(__dirname, "data", "transformers-cache");
 const EMBEDDING_DISABLED = process.env.EMBEDDING_DISABLED === "1";
+const EMBEDDING_AUTO_INSTALL = process.env.EMBEDDING_AUTO_INSTALL !== "0";
+const EMBEDDING_DEPENDENCIES = [
+    "@xenova/transformers@^2.17.2",
+    "onnxruntime-node@^1.26.0",
+    "sharp@^0.34.5"
+];
 
 const SOURCE_PATHS = [
     process.env.SOURCE_DATA_PATH,
@@ -34,6 +41,7 @@ let cachedEmbeddingIndexPromise = null;
 let cachedEmbeddingPipelinePromise = null;
 let embeddingRuntimeError = null;
 let embeddingFallbackWarned = false;
+let embeddingInstallPromise = null;
 
 function findSourceDataPath() {
     const sourcePath = SOURCE_PATHS.find(item => item && fs.existsSync(item));
@@ -293,18 +301,78 @@ async function embedText(text) {
     return Array.from(result.data, value => Number(value));
 }
 
+function isMissingEmbeddingDependencyError(error) {
+    const message = String(error?.message || "");
+    return error?.code === "ERR_MODULE_NOT_FOUND" ||
+        message.includes("Cannot find package '@xenova/transformers'") ||
+        message.includes("Cannot find package 'onnxruntime-node'") ||
+        message.includes("Cannot find package 'sharp'");
+}
+
+async function installEmbeddingDependencies() {
+    if (embeddingInstallPromise) return embeddingInstallPromise;
+
+    embeddingInstallPromise = new Promise((resolve, reject) => {
+        const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+        const args = [
+            "install",
+            "--omit=dev",
+            "--no-audit",
+            "--no-fund",
+            ...EMBEDDING_DEPENDENCIES
+        ];
+
+        console.warn(`Installing embedding dependencies: ${EMBEDDING_DEPENDENCIES.join(", ")}`);
+        execFile(npmCommand, args, {
+            cwd: __dirname,
+            timeout: 10 * 60 * 1000,
+            windowsHide: true
+        }, (error, stdout, stderr) => {
+            if (stdout) console.log(stdout.trim());
+            if (stderr) console.warn(stderr.trim());
+            if (error) {
+                embeddingInstallPromise = null;
+                reject(error);
+                return;
+            }
+            resolve();
+        });
+    });
+
+    return embeddingInstallPromise;
+}
+
+async function createEmbeddingPipeline() {
+    const { pipeline, env } = await import("@xenova/transformers");
+    env.cacheDir = EMBEDDING_MODEL_CACHE_DIR;
+    env.allowRemoteModels = process.env.EMBEDDING_ALLOW_REMOTE !== "0";
+    env.allowLocalModels = true;
+    return pipeline("feature-extraction", EMBEDDING_MODEL);
+}
+
 async function getEmbeddingPipeline() {
     if (cachedEmbeddingPipelinePromise) return cachedEmbeddingPipelinePromise;
 
     cachedEmbeddingPipelinePromise = (async () => {
-        const { pipeline, env } = await import("@xenova/transformers");
-        env.cacheDir = EMBEDDING_MODEL_CACHE_DIR;
-        env.allowRemoteModels = process.env.EMBEDDING_ALLOW_REMOTE !== "0";
-        env.allowLocalModels = true;
-        return pipeline("feature-extraction", EMBEDDING_MODEL);
+        try {
+            return await createEmbeddingPipeline();
+        } catch (error) {
+            if (!EMBEDDING_AUTO_INSTALL || !isMissingEmbeddingDependencyError(error)) {
+                throw error;
+            }
+
+            console.warn(`Embedding dependencies are missing, trying runtime install: ${error.message}`);
+            await installEmbeddingDependencies();
+            return createEmbeddingPipeline();
+        }
     })();
 
-    return cachedEmbeddingPipelinePromise;
+    try {
+        return await cachedEmbeddingPipelinePromise;
+    } catch (error) {
+        cachedEmbeddingPipelinePromise = null;
+        throw error;
+    }
 }
 
 async function analyzeErrorCase({ question, agentAnswer, agentSources, adminAnswer, topK = DEFAULT_TOP_K } = {}) {
