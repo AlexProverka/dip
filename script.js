@@ -1512,6 +1512,9 @@ function renderManualAnalysisResult(analysis = {}, stats = {}) {
     const llmText = analysis.llm?.used
         ? `${analysis.llm.provider || "LLM"} / ${analysis.llm.model || "model"}`
         : "локальный fallback";
+    const searchText = stats.embeddingModel
+        ? `${stats.searchMode || "semantic-embeddings"} / ${stats.embeddingModel}${stats.embeddingIndexReady ? "" : " (индекс будет создан при первом запуске с установленной моделью)"}`
+        : (stats.searchMode || "локальный поиск");
 
     resultBox.hidden = false;
     resultBox.innerHTML = `
@@ -1520,6 +1523,7 @@ function renderManualAnalysisResult(analysis = {}, stats = {}) {
         ${analysis.recommendation ? `<p><b>Что сделать:</b> ${escapeHtmlInline(analysis.recommendation)}</p>` : ""}
         ${analysis.suggestedSource ? `<p><b>Источник по исправлению:</b> ${escapeHtmlInline(analysis.suggestedSource)}</p>` : ""}
         <p><b>LLM:</b> ${escapeHtmlInline(llmText)}</p>
+        <p><b>Поиск источников:</b> ${escapeHtmlInline(searchText)}</p>
         ${stats.textSources ? `<p><b>Текстовых источников в базе:</b> ${escapeHtmlInline(String(stats.textSources))}</p>` : ""}
         ${topSources ? `<p><b>Top-k источники:</b></p><ul>${topSources}</ul>` : ""}
         ${evidence ? `<p><b>Доказательства:</b></p><ul>${evidence}</ul>` : ""}

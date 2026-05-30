@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const DEFAULT_TOP_K = 5;
 const MAX_SOURCE_PREVIEW = 520;
@@ -8,6 +9,11 @@ const DEFAULT_LLM_MODEL = "gpt-4o-mini";
 const POLLINATIONS_PROVIDER = "pollinations";
 const POLLINATIONS_LEGACY_ENDPOINT = "https://text.pollinations.ai/openai";
 const POLLINATIONS_MODEL = "openai-fast";
+const DEFAULT_EMBEDDING_MODEL = "Xenova/paraphrase-multilingual-MiniLM-L12-v2";
+const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL || DEFAULT_EMBEDDING_MODEL;
+const EMBEDDING_INDEX_PATH = process.env.EMBEDDING_INDEX_PATH || path.join(__dirname, "data", "source_embedding_index.json");
+const EMBEDDING_MODEL_CACHE_DIR = process.env.TRANSFORMERS_CACHE || path.join(__dirname, "data", "transformers-cache");
+const EMBEDDING_DISABLED = process.env.EMBEDDING_DISABLED === "1";
 
 const SOURCE_PATHS = [
     process.env.SOURCE_DATA_PATH,
@@ -24,6 +30,10 @@ const STOP_WORDS = new Set([
 ]);
 
 let cachedIndex = null;
+let cachedEmbeddingIndexPromise = null;
+let cachedEmbeddingPipelinePromise = null;
+let embeddingRuntimeError = null;
+let embeddingFallbackWarned = false;
 
 function findSourceDataPath() {
     const sourcePath = SOURCE_PATHS.find(item => item && fs.existsSync(item));
@@ -80,7 +90,27 @@ function loadSourceIndex() {
     return cachedIndex;
 }
 
-function searchSources(query, topK = DEFAULT_TOP_K) {
+async function searchSources(query, topK = DEFAULT_TOP_K) {
+    if (!String(query || "").trim()) {
+        return [];
+    }
+
+    if (!EMBEDDING_DISABLED && !embeddingRuntimeError) {
+        try {
+            return await searchSourcesByEmbeddings(query, topK);
+        } catch (error) {
+            embeddingRuntimeError = error;
+            if (!embeddingFallbackWarned) {
+                console.warn(`Embedding search fallback: ${error.message}`);
+                embeddingFallbackWarned = true;
+            }
+        }
+    }
+
+    return searchSourcesByTfIdf(query, topK);
+}
+
+function searchSourcesByTfIdf(query, topK = DEFAULT_TOP_K) {
     const index = loadSourceIndex();
     const queryTokens = tokenize(query);
     const queryVector = buildVector(countTerms(queryTokens), index.idf);
@@ -99,6 +129,7 @@ function searchSources(query, topK = DEFAULT_TOP_K) {
             return {
                 id: doc.id,
                 score: roundScore(score),
+                searchMode: "tf-idf",
                 cosine: roundScore(cosine),
                 overlap: roundScore(overlap),
                 fileName: doc.fileName,
@@ -115,14 +146,175 @@ function searchSources(query, topK = DEFAULT_TOP_K) {
         .slice(0, Math.max(1, Number(topK) || DEFAULT_TOP_K));
 }
 
-function analyzeErrorCase({ question, agentAnswer, agentSources, adminAnswer, topK = DEFAULT_TOP_K } = {}) {
+async function searchSourcesByEmbeddings(query, topK = DEFAULT_TOP_K) {
+    const embeddingIndex = await loadEmbeddingIndex();
+    const queryEmbedding = await embedText(query);
+    const queryNorm = denseVectorNorm(queryEmbedding);
+
+    if (!queryEmbedding.length || queryNorm === 0) {
+        return [];
+    }
+
+    const ranked = embeddingIndex.docs
+        .map(doc => {
+            const cosine = denseCosineSimilarity(queryEmbedding, queryNorm, doc.embedding, doc.embeddingNorm);
+
+            return {
+                id: doc.id,
+                score: roundScore(cosine),
+                searchMode: "semantic-embeddings",
+                embeddingModel: embeddingIndex.model,
+                cosine: roundScore(cosine),
+                fileName: doc.fileName,
+                pageNumber: doc.pageNumber,
+                sourceGroup: doc.sourceGroup,
+                text: doc.text,
+                preview: makePreview(doc.text)
+            };
+        })
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score);
+
+    return dedupeSearchResults(ranked)
+        .slice(0, Math.max(1, Number(topK) || DEFAULT_TOP_K));
+}
+
+async function loadEmbeddingIndex() {
+    if (cachedEmbeddingIndexPromise) return cachedEmbeddingIndexPromise;
+
+    cachedEmbeddingIndexPromise = buildOrLoadEmbeddingIndex();
+    return cachedEmbeddingIndexPromise;
+}
+
+async function buildOrLoadEmbeddingIndex() {
+    const sourceIndex = loadSourceIndex();
+    const sourceSignature = buildSourceSignature(sourceIndex);
+    const savedIndex = readSavedEmbeddingIndex(sourceSignature);
+
+    if (savedIndex) {
+        const embeddingsById = new Map(savedIndex.items.map(item => [item.id, item.embedding]));
+        return {
+            sourcePath: sourceIndex.sourcePath,
+            model: savedIndex.meta.model,
+            sourceSignature,
+            indexPath: EMBEDDING_INDEX_PATH,
+            docs: sourceIndex.docs
+                .map(doc => {
+                    const embedding = embeddingsById.get(doc.id);
+                    if (!embedding) return null;
+
+                    return {
+                        ...doc,
+                        embedding,
+                        embeddingNorm: denseVectorNorm(embedding)
+                    };
+                })
+                .filter(Boolean)
+        };
+    }
+
+    const items = [];
+    for (const doc of sourceIndex.docs) {
+        const embedding = await embedText(doc.text);
+        items.push({
+            id: doc.id,
+            embedding
+        });
+    }
+
+    const payload = {
+        meta: {
+            createdAt: new Date().toISOString(),
+            model: EMBEDDING_MODEL,
+            sourcePath: sourceIndex.sourcePath,
+            sourceSignature,
+            textSources: sourceIndex.docs.length
+        },
+        items
+    };
+
+    fs.mkdirSync(path.dirname(EMBEDDING_INDEX_PATH), { recursive: true });
+    fs.writeFileSync(EMBEDDING_INDEX_PATH, JSON.stringify(payload), "utf8");
+
+    return {
+        sourcePath: sourceIndex.sourcePath,
+        model: EMBEDDING_MODEL,
+        sourceSignature,
+        indexPath: EMBEDDING_INDEX_PATH,
+        docs: sourceIndex.docs.map((doc, index) => ({
+            ...doc,
+            embedding: items[index].embedding,
+            embeddingNorm: denseVectorNorm(items[index].embedding)
+        }))
+    };
+}
+
+function readSavedEmbeddingIndex(sourceSignature) {
+    if (!fs.existsSync(EMBEDDING_INDEX_PATH)) {
+        return null;
+    }
+
+    try {
+        const savedIndex = JSON.parse(fs.readFileSync(EMBEDDING_INDEX_PATH, "utf8"));
+        if (
+            savedIndex?.meta?.model === EMBEDDING_MODEL &&
+            savedIndex?.meta?.sourceSignature === sourceSignature &&
+            Array.isArray(savedIndex.items) &&
+            savedIndex.items.length > 0
+        ) {
+            return savedIndex;
+        }
+    } catch (error) {
+        console.warn(`Не удалось прочитать embedding-индекс: ${error.message}`);
+    }
+
+    return null;
+}
+
+function buildSourceSignature(index) {
+    const hash = crypto.createHash("sha256");
+    hash.update(index.sourcePath);
+    index.docs.forEach(doc => {
+        hash.update(doc.id);
+        hash.update(doc.fileName || "");
+        hash.update(String(doc.pageNumber || ""));
+        hash.update(doc.text);
+    });
+    return hash.digest("hex");
+}
+
+async function embedText(text) {
+    const extractor = await getEmbeddingPipeline();
+    const result = await extractor(String(text || ""), {
+        pooling: "mean",
+        normalize: true
+    });
+
+    return Array.from(result.data, value => Number(value));
+}
+
+async function getEmbeddingPipeline() {
+    if (cachedEmbeddingPipelinePromise) return cachedEmbeddingPipelinePromise;
+
+    cachedEmbeddingPipelinePromise = (async () => {
+        const { pipeline, env } = await import("@xenova/transformers");
+        env.cacheDir = EMBEDDING_MODEL_CACHE_DIR;
+        env.allowRemoteModels = process.env.EMBEDDING_ALLOW_REMOTE !== "0";
+        env.allowLocalModels = true;
+        return pipeline("feature-extraction", EMBEDDING_MODEL);
+    })();
+
+    return cachedEmbeddingPipelinePromise;
+}
+
+async function analyzeErrorCase({ question, agentAnswer, agentSources, adminAnswer, topK = DEFAULT_TOP_K } = {}) {
     const normalizedAgentSources = normalizeAgentSources(agentSources);
-    const topSources = searchSources(adminAnswer || question || "", topK);
+    const topSources = await searchSources(adminAnswer || question || "", topK);
     const bestSource = topSources[0] || null;
     const agentSourceText = normalizedAgentSources.map(sourceContentText).join("\n");
     const topSourceText = topSources.map(source => source.text).join("\n");
     const sourceOverlap = topSources.filter(source => sourceMatchesAgent(source, normalizedAgentSources)).length;
-    const answerSearch = searchSources(agentAnswer || "", topK);
+    const answerSearch = await searchSources(agentAnswer || "", topK);
     const answerMatchesManySources = answerSearch.filter(source => source.score >= 0.12).length >= 2;
     const evidence = [];
 
@@ -153,6 +345,8 @@ function analyzeErrorCase({ question, agentAnswer, agentSources, adminAnswer, to
 
     const adminTokens = meaningfulTokens(adminAnswer);
     const agentTokens = meaningfulTokens(agentAnswer);
+    const agentSourceAdminOverlap = tokenOverlap(meaningfulTokens(agentSourceText), adminTokens);
+    const agentAnswerAdminOverlap = tokenOverlap(agentTokens, adminTokens);
     const missingImportantTerms = adminTokens
         .filter(term => !agentTokens.includes(term))
         .slice(0, 8);
@@ -162,6 +356,21 @@ function analyzeErrorCase({ question, agentAnswer, agentSources, adminAnswer, to
         .slice(0, 8);
 
     if (hasNonexistentDirectionNoise(agentAnswer, adminAnswer, topSourceText, extraTerms)) {
+        if (sourceOverlap === 0 && agentSourceAdminOverlap < 0.28) {
+            evidence.push("Источник агента слабо связан с правильным ответом сотрудника и найденными эталонными фрагментами.");
+            evidence.push(...topEvidence(topSources));
+            if (agentSourceText) evidence.push(`Сохраненный источник агента: ${makePreview(agentSourceText, 260)}`);
+            return buildAnalysis({
+                reasonType: "wrong-source",
+                reasonTitle: "Неправильно выбран источник",
+                reasonText: "Ответ агента содержит лишние сведения, потому что был построен на неподходящем источнике.",
+                recommendation: "Для похожих вопросов сначала проверять, совпадает ли источник агента с top-k фрагментами, найденными по правильному ответу сотрудника.",
+                evidence,
+                suggestedSource: formatSourceTitle(bestSource),
+                topSources
+            });
+        }
+
         evidence.push(`В ответе агента есть лишние слова/приписки, которых нет в правильном ответе и найденных источниках: ${extraTerms.join(", ")}.`);
         evidence.push(...topEvidence(topSources));
         return buildAnalysis({
@@ -182,8 +391,41 @@ function analyzeErrorCase({ question, agentAnswer, agentSources, adminAnswer, to
         return buildAnalysis({
             reasonType: "wrong-source",
             reasonTitle: "Неправильно выбран источник",
-            reasonText: "В ответе агента есть конкретная дата или адрес, который противоречит правильному ответу сотрудника.",
-            recommendation: "Для вопросов с датами и адресами проверять совпадение конкретного факта с top-k источником по правильному ответу.",
+            reasonText: "В ответе агента есть конкретный факт, который противоречит правильному ответу сотрудника.",
+            recommendation: "Для вопросов с датами, адресами и условиями проверять совпадение конкретного факта с top-k источником по правильному ответу.",
+            evidence,
+            suggestedSource: formatSourceTitle(bestSource),
+            topSources
+        });
+    }
+
+    const isTooGenericShortAnswer = agentTokens.length <= 3 && adminTokens.length >= 8 && missingImportantTerms.length >= 6;
+    if (isTooGenericShortAnswer && sourceOverlap === 0) {
+        evidence.push("Ответ агента слишком общий и не передает конкретные сведения из правильного ответа сотрудника.");
+        evidence.push(...topEvidence(topSources));
+        if (agentSourceText) evidence.push(`Сохраненный источник агента: ${makePreview(agentSourceText, 260)}`);
+        return buildAnalysis({
+            reasonType: "wrong-source",
+            reasonTitle: "Неправильно выбран источник",
+            reasonText: "Ответ агента построен на слишком общем фрагменте и не соответствует источникам, найденным по правильному ответу сотрудника.",
+            recommendation: "Использовать не общий фрагмент о наличии темы, а конкретный top-k источник с условиями, количеством, адресом или другим существенным фактом.",
+            evidence,
+            suggestedSource: formatSourceTitle(bestSource),
+            topSources
+        });
+    }
+
+    if (isIncompleteAnswer(agentAnswer, adminAnswer, missingImportantTerms) && (agentSourceAdminOverlap >= 0.28 || agentAnswerAdminOverlap >= 0.35)) {
+        evidence.push("Ответ агента короче эталонного ответа сотрудника или не содержит важные условия из него.");
+        if (missingImportantTerms.length) {
+            evidence.push(`Пропущенные важные слова: ${missingImportantTerms.join(", ")}.`);
+        }
+        evidence.push(...topEvidence(topSources));
+        return buildAnalysis({
+            reasonType: "incomplete-answer",
+            reasonTitle: "Ответ неполный",
+            reasonText: "Агент опирался на близкий фрагмент, но перенес в ответ только часть условий из правильного ответа сотрудника.",
+            recommendation: "Не обрезать исходный фрагмент и сохранять все обязательные условия, даты, адреса и ограничения.",
             evidence,
             suggestedSource: formatSourceTitle(bestSource),
             topSources
@@ -270,7 +512,7 @@ function analyzeErrorCase({ question, agentAnswer, agentSources, adminAnswer, to
 }
 
 async function analyzeErrorCaseWithLlm(input = {}) {
-    const baseAnalysis = analyzeErrorCase(input);
+    const baseAnalysis = await analyzeErrorCase(input);
 
     if (!isLlmConfigured()) {
         return {
@@ -391,6 +633,24 @@ function hasNonexistentDirectionNoise(agentAnswer, adminAnswer, topSourceText, e
 }
 
 function detectSpecificFactConflict(agentAnswer, adminAnswer) {
+    const answer = normalizeText(agentAnswer);
+    const admin = normalizeText(adminAnswer);
+
+    if (
+        answer.includes("нужно") &&
+        /(сдавать|экзамен|экзамены|вступительн)/.test(answer) &&
+        (admin.includes("не нужно") || admin.includes("сдавать не нужно") || admin.includes("экзамены сдавать не нужно"))
+    ) {
+        return "В ответе агента указано, что экзамены нужно сдавать, а в правильном ответе сотрудника сказано, что экзамены сдавать не нужно.";
+    }
+
+    if (
+        (answer.includes("нужен всем") || answer.includes("нужно всем") || answer.includes("всем поступающ")) &&
+        (admin.includes("не нужен") || admin.includes("не нужно") || admin.includes("только при"))
+    ) {
+        return "В ответе агента указано общее обязательное условие для всех поступающих, а правильный ответ сотрудника содержит ограничение или исключение.";
+    }
+
     const agentDates = extractFactTokens(agentAnswer, DATE_PATTERNS);
     const adminDates = extractFactTokens(adminAnswer, DATE_PATTERNS);
     if (agentDates.size && adminDates.size && !setsIntersect(agentDates, adminDates)) {
@@ -504,6 +764,8 @@ function buildAnalysis({ reasonType, reasonTitle, reasonText, recommendation, ev
         topSources: (topSources || []).map(source => ({
             id: source.id,
             score: source.score,
+            searchMode: source.searchMode,
+            embeddingModel: source.embeddingModel,
             fileName: source.fileName,
             pageNumber: source.pageNumber,
             sourceGroup: source.sourceGroup,
@@ -951,6 +1213,22 @@ function cosineSimilarity(a, aNorm, b, bNorm) {
     return dot / (aNorm * bNorm);
 }
 
+function denseVectorNorm(vector) {
+    return Math.sqrt(vector.reduce((sum, value) => sum + value * value, 0));
+}
+
+function denseCosineSimilarity(a, aNorm, b, bNorm) {
+    if (!aNorm || !bNorm || !Array.isArray(a) || !Array.isArray(b)) return 0;
+
+    const length = Math.min(a.length, b.length);
+    let dot = 0;
+    for (let index = 0; index < length; index += 1) {
+        dot += a[index] * b[index];
+    }
+
+    return dot / (aNorm * bNorm);
+}
+
 function tokenOverlap(aTokens, bTokens) {
     const a = new Set(aTokens);
     const b = new Set(bTokens);
@@ -970,9 +1248,17 @@ function roundScore(value) {
 
 function getSourceStats() {
     const index = loadSourceIndex();
+    const embeddingIndexExists = fs.existsSync(EMBEDDING_INDEX_PATH);
+
     return {
         sourcePath: index.sourcePath,
-        textSources: index.docs.length
+        textSources: index.docs.length,
+        searchMode: EMBEDDING_DISABLED ? "tf-idf" : (embeddingRuntimeError ? "tf-idf-fallback" : "semantic-embeddings"),
+        embeddingModel: EMBEDDING_DISABLED ? null : EMBEDDING_MODEL,
+        embeddingIndexPath: EMBEDDING_DISABLED ? null : EMBEDDING_INDEX_PATH,
+        embeddingIndexReady: embeddingIndexExists,
+        embeddingRuntimeReady: !EMBEDDING_DISABLED && !embeddingRuntimeError,
+        embeddingRuntimeError: embeddingRuntimeError ? embeddingRuntimeError.message : ""
     };
 }
 
@@ -980,5 +1266,6 @@ module.exports = {
     analyzeErrorCase,
     analyzeErrorCaseWithLlm,
     getSourceStats,
+    prepareEmbeddingIndex: loadEmbeddingIndex,
     searchSources
 };

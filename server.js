@@ -198,7 +198,7 @@ async function handleAppApi(req, requestUrl, res) {
         sendJson(res, 200, {
             query: payload.query || "",
             topK: Number(payload.topK || 5),
-            sources: searchSources(payload.query || "", payload.topK || 5),
+            sources: await searchSources(payload.query || "", payload.topK || 5),
             stats: getSourceStats()
         });
         return true;

@@ -5,9 +5,15 @@
   "description": "Прототип чат-бота приемной комиссии ГЭУ с парсером конкурсных списков.",
   "scripts": {
     "start": "node --no-warnings server.js",
-    "dev": "node --no-warnings server.js"
+    "dev": "node --no-warnings server.js",
+    "build:embeddings": "node --no-warnings build_embedding_index.js"
   },
   "engines": {
     "node": ">=22.19.0"
+  },
+  "dependencies": {
+    "@xenova/transformers": "^2.17.2",
+    "onnxruntime-node": "^1.26.0",
+    "sharp": "^0.34.5"
   }
 }
